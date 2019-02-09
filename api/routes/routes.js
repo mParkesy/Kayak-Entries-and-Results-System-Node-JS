@@ -25,6 +25,13 @@ module.exports = function(app) {
             res.send(results);
         })
     });
+	
+	app.get('/race', function (req, res) {
+        let x = req.query.id;
+        db.getRace(x, res, function(results) {
+            res.send(results);
+        })
+    });
 
     app.get('/club', function (req, res) {
         let x = req.query.id;

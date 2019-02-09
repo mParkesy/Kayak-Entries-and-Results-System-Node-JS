@@ -19,5 +19,8 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+var listener = app.listen(8888, function(){
+    console.log('Listening on port ' + listener.address().port); //Listening on port 8888
+});
 
 module.exports = app;

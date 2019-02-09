@@ -49,6 +49,17 @@ function getRaceResults(id, res, callback) {
         });
 }
 
+function getRace(id, res, callback) {
+    db.query('SELECT * FROM race WHERE raceID = ?', [id],
+        function(err, rows) {
+            if (err) {
+                callback(error(err));
+            }else {
+                callback(success(rows));
+            }
+        });
+}
+
 function getPaddler(id, res, callback) {
     db.query('SELECT * FROM paddler WHERE paddlerID = ?', [id],
         function(err, rows) {
@@ -164,5 +175,6 @@ module.exports = {
     getClubPaddlers: getClubPaddlers,
     getPaddlerStats: getPaddlerStats,
     getPaddlerRaces: getPaddlerRaces,
+	getRace : getRace,
 
 };
