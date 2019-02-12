@@ -82,8 +82,12 @@ function getClub(id, res, callback) {
         });
 }
 
-function getRaces(res, callback) {
-    db.query('SELECT * FROM race',
+function getRaces(x, res, callback) {
+	let query = "SELECT * FROM race";
+	if(x){
+		query += " WHERE year = " + db.escape(x);
+	}
+    db.query(query,
         function(err, rows) {
             if (err) {
                 callback(error(err));
@@ -155,6 +159,63 @@ function getPaddlerRaces(id, res, callback) {
         });
 }
 
+function getDistinctYears(res, callback) {
+	db.query('SELECT DISTINCT year FROM race',
+        function(err, rows) {
+            if (err) {
+                callback(error(err));
+            } else {
+                callback(success(rows));
+            }
+        });	
+}
+
+
+function getUserByEmail(email, res, callback) {
+    db.query('SELECT * FROM user WHERE email = ?', [email], function(err, rows) {
+        if (err) {
+            callback(error(err));
+        }else {
+            callback(success(rows));
+        }
+    });
+}
+
+function checkClubPassword(password, res, callback){
+    db.query('SELECT * FROM club WHERE clubPassword = ?', [password], function(err, rows) {
+        if(err){
+            callback(error(err));
+        } else {
+            callback(success(rows));
+        }
+    })
+}
+
+function registerUser(user, res, callback){
+    db.query('' +
+        'INSERT INTO user (name, email, password, clubID, account) ' +
+        'VALUES (?, ?, ?, ?, ?)', [user.name, user.email, user.hash, user.clubID, user.is_raceorganiser],
+        function(err, rows) {
+            if(err){
+                callback(error(err));
+            } else {
+                callback(success(rows));
+            }
+        }
+    )
+}
+
+function getSearch(term, res, callback) {
+    db.query('SELECT name, paddlerID FROM paddler WHERE name LIKE "'+term+'%"', function(err, rows, fields) {
+		console.log(rows);
+        if (err) {
+            callback(error(err));
+        }else {
+            callback(success(rows));
+        }
+    });
+}
+
 function success(data){
     return JSON.stringify({"status": 200, "error": null, "response": data});
 }
@@ -176,5 +237,10 @@ module.exports = {
     getPaddlerStats: getPaddlerStats,
     getPaddlerRaces: getPaddlerRaces,
 	getRace : getRace,
-
+	getDistinctYears : getDistinctYears,
+    getUserByEmail : getUserByEmail,
+    checkClubPassword : checkClubPassword,
+	registerUser : registerUser,
+	getSearch : getSearch,
+	
 };
