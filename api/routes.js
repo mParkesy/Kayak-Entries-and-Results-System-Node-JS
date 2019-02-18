@@ -49,14 +49,16 @@ module.exports = function(app) {
     })
 
     app.get('/races', function (req, res) {
-		let x = req.query.year;
-        db.getRaces(x, res, function(results) {
+		let year = req.query.year;
+		let region = req.query.region;
+        db.getRaces(year, region, res, function(results) {
             res.send(results);
         })
     })
 
     app.get('/paddlers', function (req, res) {
-        db.getPaddlers(res, function(results) {
+        let club = req.query.club;
+        db.getPaddlers(club, res, function(results) {
             res.send(results);
         })
     })
@@ -99,6 +101,7 @@ module.exports = function(app) {
                 if(bcrypt.compareSync(password, user.password)){
                     let token = jwt.sign({ id: user.userID}, secret.secret, { expiresIn: 86400 });
 					delete user['password'];
+					console.log(user);
                     res.status(200).send({ auth: true, token: token, user: user });
                 } else {
                     res.status(401).send("Either the email or password were incorrect.");
@@ -126,7 +129,6 @@ module.exports = function(app) {
 					hash,
 					name,
 					is_raceorganiser,
-					hash,
 					clubID
 				}	
 				db.getUserByEmail(email, res, function(data){
@@ -165,6 +167,38 @@ module.exports = function(app) {
             res.send(results);
         })
 	});
+
+    app.post('/insertrace', function(req, res) {
+        let race = {
+            raceName: req.body.name,
+            year : req.body.year,
+            date : req.body.date,
+            regionID : req.body.regionID,
+            clubID : req.body.clubID
+        }
+        db.insertRace(race, res, function(results) {
+            res.send(results);
+        })
+    });
+
+    app.get('/regions', function(req, res) {
+        db.getRegions(res, function(results) {
+            res.send(results);
+        })
+    });
+
+    app.post('/isorganiser', function(req, res) {
+       db.isOrganiser(req.body.userID, res, function(results) {
+           res.send(results);
+       })
+    });
+
+    app.get('/getclubraces', function(req, res) {
+        let x = req.query.id;
+        db.getClubRaces(x, res, function(results) {
+           res.send(results);
+        });
+    })
 
     app.get('/someRoute', function (req, res) {
         res.send('Hello SomeRoute!');
