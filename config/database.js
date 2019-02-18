@@ -82,11 +82,15 @@ function getClub(id, res, callback) {
         });
 }
 
-function getRaces(x, res, callback) {
+function getRaces(year, region, res, callback) {
 	let query = "SELECT * FROM race";
-	if(x){
-		query += " WHERE year = " + db.escape(x);
-	}
+	if(year && region){
+        query += " WHERE year = " + db.escape(year) + " AND regionID = " + db.escape(region);
+	} else if (year){
+        query += " WHERE year = " + db.escape(year);
+    } else if (region) {
+        query += " WHERE regionID = " + db.escape(region);
+    }
     db.query(query,
         function(err, rows) {
             if (err) {
@@ -97,8 +101,12 @@ function getRaces(x, res, callback) {
         });
 }
 
-function getPaddlers(res, callback) {
-    db.query('SELECT * FROM paddler',
+function getPaddlers(club, res, callback) {
+    let query = 'SELECT * FROM paddler';
+    if(club !== ""){
+        query += " WHERE clubID = " + db.escape(club);
+    }
+    db.query(query,
         function(err, rows) {
             if (err) {
                 callback(error(err));
@@ -216,6 +224,74 @@ function getSearch(term, res, callback) {
     });
 }
 
+function insertRace(race, res, callback) {
+    db.query('INSERT INTO race (raceName, year, date, regionID, clubID) ' +
+        'VALUES (?, ?, ?, ?, ?)', [race.raceName, race.year, race.date, race.regionID, race.clubID],
+        function(err, rows){
+            if(err){
+                callback(error(err));
+            } else {
+                callback(success(rows));
+            }
+        }
+    )
+}
+
+function getRegions(res, callback) {
+    db.query('SELECT * FROM region',
+        function(err, rows) {
+            if(err){
+                callback(error(err));
+            } else {
+                callback(success(rows));
+            }
+        }
+    )
+}
+
+function isOrganiser(id, res, callback) {
+    db.query('SELECT COUNT(*) AS organiser, account FROM user WHERE userID = ? AND account = 1', [id],
+        function(err, rows) {
+            if(err){
+                callback(error(err));
+            } else {
+                callback(success(rows));
+            }
+        }
+    )
+}
+
+function getClubRaces(id, res, callback) {
+    db.query('SELECT * FROM race WHERE clubID = ?', [id],
+        function(err, rows){
+            if(err){
+                callback(error(err))
+            } else {
+                callback(success(rows));
+            }
+        }
+    )
+}
+
+/**
+ * Not sure what this does yet
+ * @param raceID
+ * @param res
+ * @param callback
+ */
+function getEntryCount(raceID, res, callback) {
+    db.query('SELECT COUNT(*) AS entry FROM raceresults WHERE raceID = ? AND position = ""', [raceID],
+        function (err, rows) {
+            if (err) {
+                callback(error(err));
+            } else {
+                callback(success(rows));
+            }
+        }
+    )
+}
+
+
 function success(data){
     return JSON.stringify({"status": 200, "error": null, "response": data});
 }
@@ -242,5 +318,10 @@ module.exports = {
     checkClubPassword : checkClubPassword,
 	registerUser : registerUser,
 	getSearch : getSearch,
-	
+    insertRace : insertRace,
+    getRegions : getRegions,
+    getEntryCount : getEntryCount,
+    isOrganiser : isOrganiser,
+    getClubRaces : getClubRaces
+
 };
