@@ -82,15 +82,25 @@ function getClub(id, res, callback) {
         });
 }
 
-function getRaces(year, region, res, callback) {
+function getRaces(year, region, process, res, callback) {
 	let query = "SELECT * FROM race";
+
 	if(year && region){
         query += " WHERE year = " + db.escape(year) + " AND regionID = " + db.escape(region);
 	} else if (year){
         query += " WHERE year = " + db.escape(year);
     } else if (region) {
         query += " WHERE regionID = " + db.escape(region);
+    } else {
+        if(process != null) {
+            query += " WHERE processed = " + db.escape(process);
+        }
     }
+
+    if(!query.includes("processed") && process != null){
+        query += " AND processed = " + db.escape(process);
+    }
+
     db.query(query,
         function(err, rows) {
             if (err) {
@@ -250,7 +260,7 @@ function getRegions(res, callback) {
 }
 
 function isOrganiser(id, res, callback) {
-    db.query('SELECT COUNT(*) AS organiser, account FROM user WHERE userID = ? AND account = 1', [id],
+    db.query('SELECT account FROM user WHERE userID = ?', [id],
         function(err, rows) {
             if(err){
                 callback(error(err));

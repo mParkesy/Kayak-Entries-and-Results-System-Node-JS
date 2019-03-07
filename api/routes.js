@@ -51,7 +51,8 @@ module.exports = function(app) {
     app.get('/races', function (req, res) {
 		let year = req.query.year;
 		let region = req.query.region;
-        db.getRaces(year, region, res, function(results) {
+		let process = req.query.process;
+        db.getRaces(year, region, process, res, function(results) {
             res.send(results);
         })
     })
