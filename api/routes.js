@@ -71,7 +71,7 @@ module.exports = function(app) {
     })
 
     app.get('/clubpaddlers', function (req, res) {
-        let x = req.query.id;
+        let x = req.query.club;
         db.getClubPaddlers(x, res, function(results) {
             res.send(results);
         })
@@ -198,6 +198,40 @@ module.exports = function(app) {
         let x = req.query.id;
         db.getClubRaces(x, res, function(results) {
            res.send(results);
+        });
+    })
+
+    app.get('/insertboat', function(req, res) {
+      let div = req.query.div;
+      db.insertBoat(div, res, function(results) {
+         res.send(results)
+      });
+    })
+
+    app.post('/insertpaddlerboat', function(req, res) {
+        let boat = req.body.boatid;
+        let paddler = req.body.paddlerid;
+        db.insertPaddlerBoat(boat, paddler, res, function(results) {
+            res.send(results)
+        });
+    })
+
+    app.post('/insertraceresult', function(req, res) {
+        let entry = {
+            boatID : req.body.boat,
+            raceID : req.body.race,
+            raceDivision : req.body.div
+        }
+        db.insertRaceResult(entry, res, function(results)  {
+            res.send(results);
+        });
+    })
+
+    app.get('/clubraceentries', function(req, res) {
+        let raceID = req.query.raceid;
+        let clubID = req.query.clubid;
+        db.getClubEntries(raceID, clubID, res, function(results) {
+            res.send(results);
         });
     })
 
