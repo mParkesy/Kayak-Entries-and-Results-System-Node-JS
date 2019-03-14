@@ -353,9 +353,24 @@ function insertRaceResult(entry, res, callback) {
     )
 }
 
+function deleteEntry(boatID, res, callback) {
+    db.query('DELETE FROM boat WHERE boatID = ?; ' +
+        'DELETE FROM paddlerboat WHERE boatID = ?;' +
+        'DELETE FROM raceresults WHERE boatID = ?', [boatID, boatID, boatID],
+        function(err, rows){
+            if(err){
+                callback(error(err));
+            } else {
+                callback(success(rows));
+            }
+        }
+    )
+}
+
 function getClubEntries(raceID, clubID, res, callback) {
     db.query('SELECT\n' +
-        '    paddler.*\n' +
+        '    paddler.*,\n' +
+        '    raceresults.boatID\n' +
         'FROM\n' +
         '    paddler,\n' +
         '    boat,\n' +
@@ -409,5 +424,6 @@ module.exports = {
     insertBoat : insertBoat,
     insertPaddlerBoat : insertPaddlerBoat,
     insertRaceResult : insertRaceResult,
-    getClubEntries : getClubEntries
+    getClubEntries : getClubEntries,
+    deleteEntry : deleteEntry
 };

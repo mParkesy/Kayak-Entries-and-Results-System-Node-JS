@@ -227,6 +227,14 @@ module.exports = function(app) {
         });
     })
 
+    app.post('/deleteentry', function(req, res) {
+        let boat = req.body.boatid;
+        console.log(boat);
+        db.deleteEntry(boat, res, function(results) {
+            res.send(results);
+        })
+    })
+
     app.get('/clubraceentries', function(req, res) {
         let raceID = req.query.raceid;
         let clubID = req.query.clubid;
