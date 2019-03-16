@@ -2,7 +2,7 @@
   "host": "localhost",
   "user":"root",
   "password":"",
-  "database":"kayakmanagement",
+  "database":"kayakmanagement2",
   "port": 3306,
   "multipleStatements" : true
 }
