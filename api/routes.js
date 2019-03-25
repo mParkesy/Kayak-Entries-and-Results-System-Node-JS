@@ -3,6 +3,8 @@ const db = require('../config/database');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const secret = require('../secret');
+const mail = require('../config/email');
+const crypto = require('crypto');
 
 module.exports = function(app) {
     'use strict';
@@ -102,7 +104,6 @@ module.exports = function(app) {
                 if(bcrypt.compareSync(password, user.password)){
                     let token = jwt.sign({ id: user.userID}, secret.secret, { expiresIn: 86400 });
 					delete user['password'];
-					console.log(user);
                     res.status(200).send({ auth: true, token: token, user: user });
                 } else {
                     res.status(401).send("Either the email or password were incorrect.");
@@ -125,27 +126,36 @@ module.exports = function(app) {
 				result = result.response;
 				let clubID = result[0].clubID;
 				let hash = bcrypt.hashSync(password, bcrypt.genSaltSync(10));
+				let rand = crypto.randomBytes(20).toString('hex');
 				let usrobj = {
 					email,
 					hash,
 					name,
 					is_raceorganiser,
-					clubID
+					clubID,
+                    rand
 				}	
 				db.getUserByEmail(email, res, function(data){
 					let result = JSON.parse(data);
+					console.log(result);
 					if(result.status === 200) {
 						result = result.response;
-						if (result === null) {
+						if (result.length > 0) {
 							return res.status(500).send("There was a problem registering the user.");
 						} else {
+
 							db.registerUser(usrobj, res, function(data){
 								let insertResult = JSON.parse(data);
 								if(insertResult.status === 200) {
 									insertResult = insertResult.response;
 									if(insertResult.affectedRows > 0){
-										console.log(insertResult.affectedRows + " affected from insert");
-										return res.status(200).send("Registration Successful");
+										//console.log(insertResult.affectedRows + " affected from insert");
+                                        let body = "Hello " + name + ", \n\n" +
+                                            "You recently registered on the Hasler Race Management Website,\n" +
+                                            "Please click the link below to verify your account:\n " +
+                                            "http://localhost:3000/verify?id=" + rand;
+                                        mail.send(email, "Registration Email", body);
+										return res.status(200).send("An email has been sent to verify the account");
 									}
 								} else {
 									return res.status(500).send("Registration failed, please try again.");
@@ -162,6 +172,23 @@ module.exports = function(app) {
 		});
 	})
 
+    app.get('/verify', function(req, res) {
+       let rand = req.query.id;
+       if(rand != null){
+            db.checkVerification(rand, res, function(results) {
+                if(results.changedRows > 0){
+                    console.log("yes");
+                    res.redirect('http://localhost:8081/login?result=1');
+                    //res.status(200).redirect("Your account has been verified.")
+                } else {
+                    res.status(500).send("Verification failed, unknown information.")
+                }
+            })
+       } else {
+           res.status(500).send("Verification failed, unknown information.")
+       }
+    });
+
 	app.get('/search', function(req, res) {
 		let x = req.query.term;
         db.getSearch(x, res, function(results) {
@@ -174,7 +201,6 @@ module.exports = function(app) {
             raceName: req.body.name,
             year : req.body.year,
             date : req.body.date,
-            regionID : req.body.regionID,
             clubID : req.body.clubID
         }
         db.insertRace(race, res, function(results) {
@@ -201,13 +227,6 @@ module.exports = function(app) {
         });
     })
 
-    app.get('/insertboat', function(req, res) {
-      let div = req.query.div;
-      db.insertBoat(div, res, function(results) {
-         res.send(results)
-      });
-    })
-
     app.post('/insertpaddlerboat', function(req, res) {
         let boat = req.body.boatid;
         let paddler = req.body.paddlerid;
@@ -216,20 +235,18 @@ module.exports = function(app) {
         });
     })
 
-    app.post('/insertraceresult', function(req, res) {
+    app.post('/insertboatresult', function(req, res) {
         let entry = {
-            boatID : req.body.boat,
             raceID : req.body.race,
             raceDivision : req.body.div
         }
-        db.insertRaceResult(entry, res, function(results)  {
+        db.insertBoatResult(entry, res, function(results)  {
             res.send(results);
         });
     })
 
     app.post('/deleteentry', function(req, res) {
         let boat = req.body.boatid;
-        console.log(boat);
         db.deleteEntry(boat, res, function(results) {
             res.send(results);
         })
@@ -240,6 +257,30 @@ module.exports = function(app) {
         let clubID = req.query.clubid;
         db.getClubEntries(raceID, clubID, res, function(results) {
             res.send(results);
+        });
+    })
+
+    app.get('/racedivisions', function(req, res) {
+        let race = req.query.id;
+        db.getRaceDivisions(race, res, function(results) {
+           res.send(results);
+        });
+    })
+
+    app.post('/updateraceoffset', function(req, res) {
+        let data = {
+            list : req.body.list,
+            raceID : req.body.raceID,
+        }
+        db.updateDivisionTimes(data, res, function(results){
+            res.send(results);
+        });
+    })
+
+    app.post('/assignboatnumbers', function(req, res) {
+        let data = req.body.data;
+        db.assignNumbers(data, res, function(results) {
+           res.send(results);
         });
     })
 
