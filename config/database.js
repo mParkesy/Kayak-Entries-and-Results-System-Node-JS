@@ -24,7 +24,7 @@ function connectDatabase() {
  * @param callback
  */
 function getRaceResultsOrder(id, res, callback) {
-    db.query('SELECT boatresult.raceDivision, boatresult.position, paddler.name, club.clubcode , paddler.class ,paddler.division,'
+    db.query('SELECT boatresult.boatname, boatresult.raceDivision, boatresult.position, paddler.name, club.clubcode , paddler.class ,paddler.division,'
         + ' boatresult.time, boatresult.points,boatresult.pd,boatresult.outcome '
         + ' FROM '
         + '	boatresult, paddler, club, paddlerboat'
@@ -43,7 +43,29 @@ function getRaceResultsOrder(id, res, callback) {
 }
 
 function getRaceResults(id, res, callback) {
-    db.query('SELECT * FROM boatresult WHERE raceID = ?', [id],
+    db.query('SELECT\n' +
+        '    boatresult.boatname,\n' +
+        '    boatresult.raceDivision,\n' +
+        '    boatresult.position,\n' +
+        '    paddler.name,\n' +
+        '    club.clubcode,\n' +
+        '    paddler.class,\n' +
+        '    paddler.division,\n' +
+        '    boatresult.time,\n' +
+        '    boatresult.points,\n' +
+        '    boatresult.pd,\n' +
+        '    boatresult.outcome\n' +
+        'FROM\n' +
+        '    boatresult,\n' +
+        '    paddler,\n' +
+        '    club,\n' +
+        '    paddlerboat\n' +
+        'WHERE\n' +
+        '    boatresult.boatID = paddlerboat.boatID AND boatresult.raceID = ? AND paddler.paddlerID = paddlerboat.paddlerID AND paddler.clubID = club.clubID\n' +
+        'ORDER BY\n' +
+        '    boatresult.raceDivision,\n' +
+        '    boatresult.boatname,\n' +
+        '    boatresult.position + 0 ASC', [id],
         function(err, rows) {
             if (err) {
                 callback(error(err));
@@ -249,7 +271,7 @@ function checkVerification(info, res, callback){
 }
 
 function getSearch(term, res, callback) {
-    db.query('SELECT name, paddlerID FROM paddler WHERE name LIKE "'+term+'%"', function(err, rows, fields) {
+    db.query('SELECT name, class, paddlerID, division, club.clubID, club.clubcode FROM paddler, club WHERE name LIKE "'+term+'%" AND paddler.clubID = club.clubID', function(err, rows) {
 		console.log(rows);
         if (err) {
             callback(error(err));
@@ -366,7 +388,8 @@ function deleteEntry(boatID, res, callback) {
 function getClubEntries(raceID, clubID, res, callback) {
     db.query('SELECT\n' +
         '    paddler.*,\n' +
-        '    boatresult.boatID\n' +
+        '    boatresult.boatID,\n' +
+        '    boatresult.raceDivision\n' +
         '    FROM\n' +
         '    paddler,\n' +
         '    boatresult,\n' +
@@ -374,7 +397,8 @@ function getClubEntries(raceID, clubID, res, callback) {
         'WHERE\n' +
         '    boatresult.raceID = ? ' +
         '    AND boatresult.boatID = paddlerboat.boatID AND paddlerboat.paddlerID = paddler.paddlerID ' +
-        '    AND paddler.clubID = ?', [raceID, clubID],
+        '    AND paddler.clubID = ?' +
+        '    ORDER BY raceDivision DESC, boatID', [raceID, clubID],
         function(err, rows) {
             if(err){
                 callback(error(err));
@@ -386,7 +410,7 @@ function getClubEntries(raceID, clubID, res, callback) {
 }
 
 function getRaceDivisions(raceID, res, callback) {
-    db.query('SELECT DISTINCT raceDivision, time FROM boatresult WHERE raceID = ?', [raceID],
+    db.query('SELECT DISTINCT raceDivision FROM boatresult WHERE raceID = ?', [raceID],
      function(err, rows){
         if(err){
            callback(error(err));
@@ -396,6 +420,8 @@ function getRaceDivisions(raceID, res, callback) {
      }
     )
 }
+
+
 
 function updateRaceOffset(data, res, callback) {
     db.query('UPDATE race SET boatOffset = ? WHERE raceID = ?', [data.list, data.raceID],
@@ -418,26 +444,37 @@ function updateRaceOffset(data, res, callback) {
     )*/
 }
 
-function assignNumbers(data,res, callback) {
-
+function assignNumbers(data, res, callback) {
     let sql = "";
     for(let i = 0; i < data.divList.length; i++){
         let currentDiv = data.divList[i];
         let raceID = data.raceID;
         let count = 0, type = 0;
+        let divNum = currentDiv[0];
         if(currentDiv.includes("_")){
          count = 2;
          type = 5;
         } else count = 1;
-        let s = "SET @increment = " + currentDiv + type + "0;" +
+        let s = "SET @increment = " + divNum + type + "0;" +
             "UPDATE boatresult " +
             "SET boatname = @increment:= @increment + 1 " +
-            "WHERE raceDivision = " + currentDiv + " AND raceID = " + db.escape(raceID) +
+            "WHERE raceDivision = '" + currentDiv + "' AND raceID = " + db.escape(raceID) +
             " AND (SELECT COUNT(*) FROM paddlerboat WHERE boatresult.boatID = paddlerboat.boatID) = " + count + "; \n";
         sql = sql + s;
     }
-    console.log(sql);
     db.query(sql,
+        function(err, rows){
+            if(err){
+                callback(error(err));
+            } else {
+                callback(success(rows));
+            }
+        }
+    )
+}
+
+function updateBoatResult(data, res, callback){
+    db.query('UPDATE boatresult SET time = ?, outcome = ? WHERE boatname = ?', [data.racetime, data.outcome, data.boatname],
         function(err, rows){
             if(err){
                 callback(error(err));
@@ -484,7 +521,8 @@ module.exports = {
     getClubEntries : getClubEntries,
     deleteEntry : deleteEntry,
     getRaceDivisions : getRaceDivisions,
-    updateDivisionTimes : updateRaceOffset,
+    updateRaceOffset : updateRaceOffset,
     assignNumbers : assignNumbers,
-    checkVerification : checkVerification
+    checkVerification : checkVerification,
+    updateBoatResult : updateBoatResult
 };

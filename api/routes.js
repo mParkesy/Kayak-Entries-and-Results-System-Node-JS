@@ -16,7 +16,7 @@ module.exports = function(app) {
         })
     });
 
-    app.get('/raceresult_normal', function (req, res) {
+    app.get('/raceresult_number', function (req, res) {
         let x = req.query.id;
         db.getRaceResults(x, res, function(results) {
             res.send(results);
@@ -272,7 +272,7 @@ module.exports = function(app) {
             list : req.body.list,
             raceID : req.body.raceID,
         }
-        db.updateDivisionTimes(data, res, function(results){
+        db.updateRaceOffset(data, res, function(results){
             res.send(results);
         });
     })
@@ -280,6 +280,13 @@ module.exports = function(app) {
     app.post('/assignboatnumbers', function(req, res) {
         let data = req.body.data;
         db.assignNumbers(data, res, function(results) {
+           res.send(results);
+        });
+    })
+
+    app.post('/updateboatresult', function(req, res) {
+        let data = req.body.data;
+        db.updateBoatResult(data, res, function(results){
            res.send(results);
         });
     })
