@@ -291,9 +291,32 @@ module.exports = function(app) {
         });
     })
 
-    app.get('/someRoute', function (req, res) {
-        res.send('Hello SomeRoute!');
-    });
+    app.get('/boatnumbers', function(req, res) {
+        let id = req.query.id;
+        db.getDistinctBoatnumbers(id, res, function (results) {
+            res.send(results);
+        });
+    })
+
+    app.post('/insertAccess', function(req, res) {
+        let data = req.body.data;
+        let hash = crypto.randomBytes(50).toString('hex');
+        let body = "Hello volunteer  \n\n" +
+            "You have been asked to help input boat numbers and their finishing time.\n" +
+            "Please follow the link below to access the input page.\n" +
+            "http://localhost:8081/phoneresults/" + hash;
+        mail.send(data.email, "Race Result Volunteer", body);
+        db.insertAccess(data, hash, res, function(results) {
+           res.send(results);
+        });
+    })
+
+    app.get('/accesspage', function(req, res) {
+        let hash =  req.query.id;
+        db.checkAccess(hash, res, function(results) {
+            res.send(results);
+        });
+    })
 };
 
 

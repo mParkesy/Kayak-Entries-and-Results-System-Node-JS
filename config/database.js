@@ -134,7 +134,7 @@ function getRaces(year, region, process, res, callback) {
             } else {
                 callback(success(rows));
             }
-        });
+    });
 }
 
 function getPaddlers(club, res, callback) {
@@ -485,6 +485,42 @@ function updateBoatResult(data, res, callback){
     )
 }
 
+function getDistinctBoatnumbers(id, res, callback){
+    db.query('SELECT DISTINCT boatname FROM boatresult WHERE raceID = ?', [id],
+        function(err, rows){
+            if(err){
+                callback(error(err));
+            } else {
+                callback(success(rows));
+            }
+        }
+    )
+}
+
+function insertAccess(data, hash, res, callback){
+    db.query('INSERT INTO temporaryaccess (hash, email, accessType, raceID) VALUES (?, ?, ?, ?);', [hash, data.email, data.accessType, data.raceid],
+        function(err, rows){
+            if(err){
+                callback(error(err));
+            } else {
+                callback(success(rows));
+            }
+        }
+    )
+}
+
+function checkAccess(hash, res, callback) {
+    db.query('SELECT * FROM temporaryaccess WHERE hash = ?;', [hash],
+        function(err, rows){
+            if(err){
+                callback(error(err));
+            } else {
+                callback(success(rows));
+            }
+        }
+    )
+}
+
 function success(data){
     return JSON.stringify({"status": 200, "error": null, "response": data});
 }
@@ -524,5 +560,9 @@ module.exports = {
     updateRaceOffset : updateRaceOffset,
     assignNumbers : assignNumbers,
     checkVerification : checkVerification,
-    updateBoatResult : updateBoatResult
+    updateBoatResult : updateBoatResult,
+    getDistinctBoatnumbers : getDistinctBoatnumbers,
+    insertAccess : insertAccess,
+    checkAccess : checkAccess
+
 };
