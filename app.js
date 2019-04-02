@@ -10,6 +10,8 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(bodyParser.json());
 
+
+
 const db = require('./config/database');
 db.connectDatabase();
 
@@ -28,8 +30,6 @@ require('./api/routes')(app);
 
 app.use(logger('dev'));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
-
 
 
 module.exports = app;
