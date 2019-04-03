@@ -6,7 +6,7 @@ function connectDatabase() {
     if(!db){
         db = mysql.createPool(settings);
 
-        db.connect(function(err) {
+        db.getConnection(function(err) {
             if(!err){
                 console.log('MySQL Database connected.');
             } else {
