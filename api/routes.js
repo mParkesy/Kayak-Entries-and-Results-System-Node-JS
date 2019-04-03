@@ -178,7 +178,7 @@ module.exports = function(app) {
             db.checkVerification(rand, res, function(results) {
                 if(results.changedRows > 0){
                     console.log("yes");
-                    res.redirect('http://https://kayakmanagement-65a08.firebaseapp.com/login?result=1');
+                    res.redirect('https://kayakmanagement-65a08.firebaseapp.com/login?result=1');
                     //res.status(200).redirect("Your account has been verified.")
                 } else {
                     res.status(500).send("Verification failed, unknown information.")
@@ -304,7 +304,7 @@ module.exports = function(app) {
         let body = "Hello volunteer  \n\n" +
             "You have been asked to help input boat numbers and their finishing time.\n" +
             "Please follow the link below to access the input page.\n" +
-            "http://https://kayakmanagement-65a08.firebaseapp.com/phoneresults/" + hash;
+            "https://kayakmanagement-65a08.firebaseapp.com/phoneresults/" + hash;
         mail.send(data.email, "Race Result Volunteer", body);
         db.insertAccess(data, hash, res, function(results) {
            res.send(results);
