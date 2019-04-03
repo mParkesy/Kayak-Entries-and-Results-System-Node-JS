@@ -1,8 +1,8 @@
 {
   "connectionLimit" : 1000,
-  "connectTimeout" : 36000,
-  "acquireTimeout" : 36000,
-  "timeout" : 36000,
+  "connectTimeout" : 3600000,
+  "acquireTimeout" : 3600000,
+  "timeout" : 3600000,
   "host": "kayakresults.clufcvenubja.us-east-1.rds.amazonaws.com",
   "user":"kayakadmin",
   "password":"hasler123",
