@@ -4,7 +4,7 @@ let db;
 
 function connectDatabase() {
     if(!db){
-        db = mysql.createConnection(settings);
+        db = mysql.createPool(settings);
 
         db.connect(function(err) {
             if(!err){
