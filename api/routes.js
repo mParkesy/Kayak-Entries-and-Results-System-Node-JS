@@ -311,6 +311,19 @@ module.exports = function(app) {
         });
     })
 
+    app.get('/distinctdivisions', function(req, res) {
+        db.distinctDivisions(res, function(results) {
+           res.send(results);
+        });
+    })
+
+    app.post('/addPaddler', function(req, res) {
+        let data = req.body.data;
+        db.addPaddler(data, res, function(results) {
+           res.send(results);
+        });
+    })
+
     app.get('/accesspage', function(req, res) {
         let hash =  req.query.id;
         db.checkAccess(hash, res, function(results) {

@@ -521,6 +521,30 @@ function checkAccess(hash, res, callback) {
     )
 }
 
+function distinctDivisions(res, callback) {
+    db.query('SELECT DISTINCT division FROM paddler',
+        function(err, rows) {
+            if(err){
+                callback(error(err));
+            } else {
+                callback(success(rows));
+            }
+        }
+    )
+}
+
+function addPaddler(data, res, callback) {
+    db.query('INSERT INTO paddler (name, division, class, bcu, clubID) VALUES (?, ?, ?, ?, ?);', [data.name, data.division, data.class, data.bcu, data.club],
+        function(err, rows) {
+            if(err){
+                callback(error(err));
+            } else {
+                callback(success(rows));
+            }
+        }
+    )
+}
+
 function success(data){
     return JSON.stringify({"status": 200, "error": null, "response": data});
 }
@@ -563,6 +587,9 @@ module.exports = {
     updateBoatResult : updateBoatResult,
     getDistinctBoatnumbers : getDistinctBoatnumbers,
     insertAccess : insertAccess,
-    checkAccess : checkAccess
+    checkAccess : checkAccess,
+    distinctDivisions : distinctDivisions,
+    addPaddler : addPaddler,
+
 
 };
