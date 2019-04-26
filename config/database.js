@@ -25,7 +25,7 @@ function connectDatabase() {
  */
 function getRaceResultsOrder(id, res, callback) {
     db.query('SELECT boatresult.boatname, boatresult.raceDivision, boatresult.position, paddler.name, club.clubcode , paddler.class ,paddler.division,'
-        + ' boatresult.time, boatresult.points,boatresult.pd,boatresult.outcome '
+        + ' boatresult.time, boatresult.points ,boatresult.pd,boatresult.outcome '
         + ' FROM '
         + '	boatresult, paddler, club, paddlerboat'
         + ' WHERE '
@@ -473,7 +473,7 @@ function assignNumbers(data, res, callback) {
     )
 }
 
-function updateBoatResult(data, res, callback){
+function updateBoatTime(data, res, callback){
     db.query('UPDATE boatresult SET time = ?, outcome = ? WHERE boatname = ?', [data.racetime, data.outcome, data.boatname],
         function(err, rows){
             if(err){
@@ -545,6 +545,82 @@ function addPaddler(data, res, callback) {
     )
 }
 
+function updateRace(race, res, callback) {
+    db.query('UPDATE race SET raceName = ?, year = ?, date = ? WHERE raceID = ?', [race.raceName, race.year, race.date, race.raceID],
+        function(err, rows){
+            if(err){
+                callback(error(err));
+            } else {
+                callback(success(rows));
+            }
+        }
+    )
+}
+
+function updateBoatResult(data, res, callback){
+    db.query('UPDATE boatresult SET position = ?, time = ?, pd = ? WHERE boatname = ? AND raceID = ?',
+        [data.position, data.time, data.pd, data.boatname, data.raceID],
+        function(err, rows){
+            if(err){
+                callback(error(err));
+            } else {
+                callback(success(rows));
+            }
+        }
+    )
+}
+
+function updateBoatResultProcess(data, res, callback){
+    let sql = "UPDATE boatresult SET position = "+ data.position +", points = "+ data.points +", pd = "+ data.pd +" WHERE boatname = "+ data.boatname +" AND raceID = "+ data.raceID;
+    console.log(sql);
+    db.query('UPDATE boatresult SET position = ?, points = ?, pd = ? WHERE boatname = ? AND raceID = ?',
+        [data.position, data.points, data.pd, data.boatname, data.raceID],
+        function(err, rows){
+            if(err){
+                callback(error(err));
+            } else {
+                callback(success(rows));
+            }
+        }
+    )
+}
+
+function updateProcess(data, res, callback) {
+    db.query('UPDATE race SET processed = ? WHERE raceID = ?', [data.process, data.raceID],
+        function(err, rows){
+            if(err){
+                callback(error(err));
+            } else {
+                callback(success(rows));
+            }
+        }
+    )
+}
+
+function getAdvisorEmail(data, res, callback) {
+    db.query('SELECT advisorEmail FROM region WHERE regionID = ?', [data],
+        function(err, rows){
+            if(err){
+                callback(error(err));
+            } else {
+                callback(success(rows));
+            }
+        }
+    )
+}
+
+function getBoatResult(raceID, res, callback) {
+    db.query('SELECT * FROM boatresult WHERE raceID = ?', [raceID],
+        function(err, rows){
+            if(err){
+                callback(error(err));
+            } else {
+                callback(success(rows));
+            }
+        }
+    )
+}
+
 function success(data){
     return JSON.stringify({"status": 200, "error": null, "response": data});
 }
@@ -584,12 +660,17 @@ module.exports = {
     updateRaceOffset : updateRaceOffset,
     assignNumbers : assignNumbers,
     checkVerification : checkVerification,
-    updateBoatResult : updateBoatResult,
+    updateBoatTime : updateBoatTime,
     getDistinctBoatnumbers : getDistinctBoatnumbers,
     insertAccess : insertAccess,
     checkAccess : checkAccess,
     distinctDivisions : distinctDivisions,
     addPaddler : addPaddler,
-
+    updateRace : updateRace,
+    updateBoatResult : updateBoatResult,
+    updateProcess : updateProcess,
+    getAdvisorEmail : getAdvisorEmail,
+    getBoatResult : getBoatResult,
+    updateBoatResultProcess : updateBoatResultProcess,
 
 };

@@ -284,9 +284,10 @@ module.exports = function(app) {
         });
     })
 
-    app.post('/updateboatresult', function(req, res) {
+    app.post('/updateboattime', function(req, res) {
         let data = req.body.data;
-        db.updateBoatResult(data, res, function(results){
+        console.log(data);
+        db.updateBoatTime(data, res, function(results){
            res.send(results);
         });
     })
@@ -324,12 +325,149 @@ module.exports = function(app) {
         });
     })
 
+    app.post('/updaterace', function(req, res) {
+        let race = {
+            raceName: req.body.name,
+            year : req.body.year,
+            date : req.body.date,
+            raceID : req.body.raceID
+        }
+        db.updateRace(race, res, function(results) {
+            res.send(results);
+        })
+    });
+
+    app.post('/updateboatresult', function(req, res) {
+        let data = req.body.data;
+        db.updateBoatResult(data, res, function(results){
+            res.send(results);
+        });
+    })
+
+    app.post('/mass_updateboatresult', function(req, res) {
+        let data = req.body.data;
+        let response = [];
+        for(let i = 0; i < data.length; i++){
+            db.updateBoatResult(data[i], res, function(results){
+                response.push(results);
+            });
+        }
+        res.send(response);
+    })
+
+    app.post('/updateraceprocess', function(req, res) {
+        let data = req.body.data;
+        if(data.region != undefined){
+            regionalAdvisorEmail(data.raceID, data.region, res);
+        } else {
+            db.updateProcess(data, res, function(results){
+                res.send(results);
+            });
+        }
+
+    })
+
     app.get('/accesspage', function(req, res) {
         let hash =  req.query.id;
         db.checkAccess(hash, res, function(results) {
             res.send(results);
         });
     })
+
+    function hmsToSeconds(s) {
+        var b = s.split(':');
+        return b[0]*3600 + b[1]*60 + (+b[2] || 0);
+    }
+
+    app.post('/processresults', function(req, res) {
+        let data = req.body.data;
+        db.getBoatResult(data.raceID, res, function(results) {
+            results = JSON.parse(results).response;
+
+            // sort into list of races
+            let raceList = [];
+            for(let i = 0; i < results.length; i++){
+                let div = results[i].raceDivision;
+                if(div.includes("_")){
+                    div = div[0] + "0";
+                } else {
+                    div = div[0];
+                }
+                if(raceList[parseInt(div)] == null){
+                    raceList[parseInt(div)] = new Array();
+                    raceList[parseInt(div)].push(results[i]);
+                } else {
+                    raceList[parseInt(div)].push(results[i]);
+                }
+            }
+
+            // loop over each race and order results by time
+            for(let j = 0; j < raceList.length; j++){
+                if(raceList[j] != null){
+                    raceList[j].sort(function(a, b) {
+                        return parseInt(hmsToSeconds(a.time)) - parseInt(hmsToSeconds(b.time));
+                    })
+                }
+            }
+
+            for(let x = 0; x < raceList.length; x++){
+                if(raceList[x] != null){
+                    let resultList = raceList[x];
+                    console.log(resultList);
+                    let startingPoints = 20;
+                    let pos = 1;
+                    for(let z = 0; z < resultList.length; z++){
+                        resultList[z].position = pos;
+                        resultList[z].points = startingPoints;
+
+                        let data = {
+                            position : resultList[z].position,
+                            boatname : resultList[z].boatname,
+                            points : resultList[z].points,
+                            pd : resultList[z].pd,
+                            raceID : resultList[z].raceID
+                        }
+
+                        db.updateBoatResultProcess(data, res, function(results) {
+
+                        });
+                        startingPoints--;
+                        pos++;
+                    }
+                }
+
+            }
+            res.send("hello")
+
+            /*for(let i = 0; i < results.length; i++){
+                console.log(results[i]);
+            }*/
+
+        })
+    })
+
+    function regionalAdvisorEmail(raceID, region, res){
+        db.getAdvisorEmail(region, res, function(results) {
+            results = JSON.parse(results);
+            let email = results.response[0].advisorEmail;
+            let hash = crypto.randomBytes(50).toString('hex');
+            let body = "Hello Regional Advisor,  \n\n" +
+                "A set of race results have been submitted.\n" +
+                "Please follow the link below to review the results and make changes.\n" +
+                "http://localhost:8081/adminresult/" + raceID + "?auth=" + hash;
+            mail.send(email, "Race Result Submission", body);
+            let data = {
+                email : email,
+                accessType : 1,
+                raceid : raceID
+            }
+            db.insertAccess(data, hash, res, function(results) {
+                res.send(results);
+            });
+
+        })
+
+    }
 };
 
 
