@@ -1,5 +1,6 @@
 const nodemailer = require('nodemailer');
 
+// gmail details for email sending
 let transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -9,6 +10,12 @@ let transporter = nodemailer.createTransport({
 })
 
 module.exports = {
+    /**
+     * Email sending function
+     * @param to Email address of email to be sent to
+     * @param subject Subject of email
+     * @param body Body of email
+     */
     send: function(to, subject, body) {
         let options = {
             from: 'haslermanagement@gmail.com',

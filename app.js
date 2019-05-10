@@ -11,7 +11,7 @@ app.use(bodyParser.urlencoded({
 app.use(bodyParser.json());
 
 
-
+// get database details and connect to database
 const db = require('./config/database');
 db.connectDatabase();
 
@@ -26,10 +26,10 @@ const allowCrossDomain = function(req, res, next) {
 }
 app.use(allowCrossDomain)
 
+// include routes for api
 require('./api/routes')(app);
 
 app.use(logger('dev'));
 app.use(cookieParser());
-
 
 module.exports = app;
