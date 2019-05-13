@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="BookmarkManager">
-    <bookmark url="file://$PROJECT_DIR$/config/database.js" line="680" />
+    <bookmark url="file://$PROJECT_DIR$/config/database.js" line="811" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5d8def62-65cf-4823-82e1-55932ca95640" name="Default Changelist" comment="" />
+    <list default="true" id="5d8def62-65cf-4823-82e1-55932ca95640" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/routes.js" beforeDir="false" afterPath="$PROJECT_DIR$/api/routes.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app.js" beforeDir="false" afterPath="$PROJECT_DIR$/app.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/database.js" beforeDir="false" afterPath="$PROJECT_DIR$/config/database.js" afterDir="false" />
+    </list>
     <ignored path="$PROJECT_DIR$/.tmp/" />
     <ignored path="$PROJECT_DIR$/temp/" />
     <ignored path="$PROJECT_DIR$/tmp/" />
@@ -14,15 +19,49 @@
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="FUSProjectUsageTrigger">
+    <session id="276521876">
+      <usages-collector id="statistics.lifecycle.project">
+        <counts>
+          <entry key="project.closed" value="5" />
+          <entry key="project.open.time.10" value="1" />
+          <entry key="project.open.time.3" value="2" />
+          <entry key="project.open.time.5" value="1" />
+          <entry key="project.open.time.7" value="1" />
+          <entry key="project.opened" value="5" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.extensions.edit">
+        <counts>
+          <entry key="js" value="8246" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.types.edit">
+        <counts>
+          <entry key="JavaScript" value="8246" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.extensions.open">
+        <counts>
+          <entry key="js" value="3" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.types.open">
+        <counts>
+          <entry key="JavaScript" value="3" />
+        </counts>
+      </usages-collector>
+    </session>
+  </component>
   <component name="FileEditorManager">
-    <splitter split-orientation="horizontal" split-proportion="0.46812385">
+    <splitter split-orientation="horizontal" split-proportion="0.5">
       <split-first>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
           <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/config/database.js">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="583">
-                  <caret line="244" column="12" selection-start-line="244" selection-start-column="12" selection-end-line="244" selection-end-column="12" />
+                <state relative-caret-position="11038">
+                  <caret line="808" column="48" selection-start-line="808" selection-start-column="48" selection-end-line="808" selection-end-column="48" />
                 </state>
               </provider>
             </entry>
@@ -30,8 +69,17 @@
           <file pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/api/routes.js">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="104">
-                  <caret line="589" column="42" selection-start-line="589" selection-start-column="42" selection-end-line="589" selection-end-column="42" />
+                <state relative-caret-position="195">
+                  <caret line="76" column="18" selection-start-line="76" selection-start-column="11" selection-end-line="76" selection-end-column="18" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/app.js">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="175">
+                  <caret line="19" column="22" selection-start-line="19" selection-start-column="22" selection-end-line="32" selection-end-column="25" />
                 </state>
               </provider>
             </entry>
@@ -39,12 +87,12 @@
         </leaf>
       </split-first>
       <split-second>
-        <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+        <leaf>
           <file pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/config/database.js">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="261">
-                  <caret line="270" column="1" lean-forward="true" selection-start-line="270" selection-start-column="1" selection-end-line="270" selection-end-column="1" />
+                <state relative-caret-position="195">
+                  <caret line="100" column="16" selection-start-line="100" selection-start-column="9" selection-end-line="100" selection-end-column="16" />
                 </state>
               </provider>
             </entry>
@@ -62,13 +110,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>paddler</find>
-      <find>getraceres</find>
-      <find>getAdvisor</find>
-      <find>updaterace</find>
-      <find>updateRace</find>
-      <find>insertrace</find>
-      <find>insertRace</find>
       <find>ey</find>
       <find>header</find>
       <find>divisio</find>
@@ -77,14 +118,12 @@
       <find>getRace</find>
       <find>getClub</find>
       <find>mass</find>
-      <find>points</find>
       <find>getclubby</find>
       <find>processType</find>
       <find>getpaddlerReg</find>
       <find>getboatres</find>
       <find>console.log</find>
       <find>getBoatRe</find>
-      <find>getclub</find>
       <find>clubList</find>
       <find>season</find>
       <find>console</find>
@@ -92,6 +131,15 @@
       <find>cluben</find>
       <find>checkCl</find>
       <find>register</find>
+      <find>getRaceResults</find>
+      <find>insertpaddler</find>
+      <find>sort</find>
+      <find>boatnumbers</find>
+      <find>points</find>
+      <find>race?</find>
+      <find>race</find>
+      <find>processres</find>
+      <find>getclub</find>
     </findStrings>
     <replaceStrings>
       <replace>boatresult</replace>
@@ -113,25 +161,39 @@
         <option value="$PROJECT_DIR$/api/routes/routes.js" />
         <option value="$PROJECT_DIR$/secret" />
         <option value="$PROJECT_DIR$/config/db.json" />
-        <option value="$PROJECT_DIR$/app.js" />
         <option value="$PROJECT_DIR$/config/email.js" />
+        <option value="$PROJECT_DIR$/app.js" />
         <option value="$PROJECT_DIR$/api/routes.js" />
         <option value="$PROJECT_DIR$/config/database.js" />
       </list>
     </option>
   </component>
+  <component name="JsBuildToolGruntFileManager" detection-done="true" sorting="DEFINITION_ORDER" />
+  <component name="JsBuildToolPackageJson" detection-done="true" sorting="DEFINITION_ORDER">
+    <package-json value="$PROJECT_DIR$/package.json" />
+  </component>
+  <component name="JsGulpfileManager">
+    <detection-done>true</detection-done>
+    <sorting>DEFINITION_ORDER</sorting>
+  </component>
+  <component name="NodeModulesDirectoryManager">
+    <handled-path value="$PROJECT_DIR$/node_modules" />
+  </component>
+  <component name="NodePackageJsonFileManager">
+    <packageJsonPaths>
+      <path value="$PROJECT_DIR$/package.json" />
+    </packageJsonPaths>
+  </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="-8" />
-    <option name="y" value="-8" />
-    <option name="width" value="1936" />
-    <option name="height" value="1056" />
+    <option name="x" value="-7" />
+    <option name="width" value="974" />
+    <option name="height" value="1047" />
   </component>
   <component name="ProjectView">
     <navigator proportions="" version="1">
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -153,12 +215,13 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="javascript.nodejs.core.library.configured.version" value="10.14.1" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../ThirdYearProjectVue" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="nodejs_interpreter_path" value="node" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="nodejs_npm_path_reset_for_default_project" value="true" />
@@ -249,11 +312,16 @@
       <workItem from="1557429884890" duration="6216000" />
       <workItem from="1557473040091" duration="9491000" />
       <workItem from="1557507648199" duration="4718000" />
+      <workItem from="1557525127220" duration="1059000" />
+      <workItem from="1557567282601" duration="601000" />
+      <workItem from="1557642734492" duration="2255000" />
+      <workItem from="1557658034824" duration="3575000" />
+      <workItem from="1557681165726" duration="7989000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="220400000" />
+    <option name="totallyTimeSpent" value="235879000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -268,13 +336,13 @@
     <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49774435" visible="true" weight="0.13224447" />
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.4924078" visible="true" weight="0.09957851" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
-      <window_info id="npm" order="2" sideWeight="0.5022556" side_tool="true" visible="true" weight="0.13224447" />
+      <window_info id="npm" order="2" sideWeight="0.5075922" side_tool="true" visible="true" weight="0.09957851" />
       <window_info id="Favorites" order="3" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.3288854" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.27952328" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.27874187" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -291,6 +359,9 @@
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="1" />
+  </component>
+  <component name="VcsContentAnnotationSettings">
+    <option name="myLimit" value="2678400000" />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/routes/users.js" />
@@ -331,22 +402,22 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="561">
-          <caret line="33" lean-forward="true" selection-start-line="33" selection-end-line="33" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/api/routes.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="104">
-          <caret line="589" column="42" selection-start-line="589" selection-start-column="42" selection-end-line="589" selection-end-column="42" />
+        <state relative-caret-position="175">
+          <caret line="19" column="22" selection-start-line="19" selection-start-column="22" selection-end-line="32" selection-end-column="25" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/config/database.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="261">
-          <caret line="270" column="1" lean-forward="true" selection-start-line="270" selection-start-column="1" selection-end-line="270" selection-end-column="1" />
+        <state relative-caret-position="11038">
+          <caret line="808" column="48" selection-start-line="808" selection-start-column="48" selection-end-line="808" selection-end-column="48" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/api/routes.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="195">
+          <caret line="76" column="18" selection-start-line="76" selection-start-column="11" selection-end-line="76" selection-end-column="18" />
         </state>
       </provider>
     </entry>

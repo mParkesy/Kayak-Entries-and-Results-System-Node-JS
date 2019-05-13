@@ -9,17 +9,16 @@ let token = "";
 module.exports = function(app) {
     'use strict';
 
-/*    var check = function(req, res, next) {
-        if(req._parsedUrl.pathname === '/') {
-            next();
-        } else  {
-            let server_token = req.headers['authorization'];
-            if(server_token == "1"){
-                next();
-            }
 
+
+       var check = function(req, res, next) {
+                let server_token = req.headers['authorization'];
+                if(server_token === token) {
+                    next();
+                } else {
+                    res.send("no token provided")
+                }
         }
-    }*/
 
     /**
      * API Path - Gets race results for a specific race in order
@@ -114,7 +113,7 @@ module.exports = function(app) {
     /**
      * API Path - Get a list of paddlers from a specific club by clubID ordered by number of race entries
      */
-    app.get('/clubpaddlers', function (req, res) {
+    app.get('/clubpaddlers', check, function (req, res) {
         let x = req.query.club;
         db.getClubPaddlersEntries(x, res, function(results) {
             res.send(results);
@@ -174,11 +173,14 @@ module.exports = function(app) {
 		let name = req.body.name;
 		let is_raceorganiser = req.body.is_raceorganiser;
 		let clubPassword = req.body.regPassword.toUpperCase();
+		// calls the database to make sure the correct club password was entered
 		db.checkClubPassword(clubPassword, res, function(data){
 			let result = JSON.parse(data);
+			// check to see if database call was successful
 			if(result.status === 200) {
 				result = result.response;
 				let clubID = result[0].clubID;
+				// hash the password
 				let hash = bcrypt.hashSync(password, bcrypt.genSaltSync(10));
 				let rand = crypto.randomBytes(20).toString('hex');
 				let usrobj = {
@@ -189,28 +191,34 @@ module.exports = function(app) {
 					clubID,
                     rand
 				}
+				// check if a user with that email already exists
 				db.getUserByEmail(email, res, function(data){
 					let result = JSON.parse(data);
 					if(result.status === 200) {
 						result = result.response;
 						if (result.length > 0) {
+						    // user already exists with that email
 							return res.status(500).send("There was a problem registering the user.");
 						} else {
-
+						    // register the user in the database
 							db.registerUser(usrobj, res, function(data){
 								let insertResult = JSON.parse(data);
 								if(insertResult.status === 200) {
 									insertResult = insertResult.response;
+									// if insert successful then send verification email
 									if(insertResult.affectedRows > 0){
 										//console.log(insertResult.affectedRows + " affected from insert");
                                         let body = "Hello " + name + ", \n\n" +
                                             "You recently registered on the Hasler Race Management Website,\n" +
                                             "Please click the link below to verify your account:\n " +
                                             "http://localhost:3000/verify?id=" + rand;
+                                        // sene email
                                         mail.send(email, "Registration Email", body);
+                                        // send message to front end
 										return res.status(200).send("An email has been sent to verify the account");
 									}
 								} else {
+								    // database fail or account exists
 									return res.status(500).send("Registration failed, please try again.");
 								}
 							});
@@ -230,20 +238,27 @@ module.exports = function(app) {
      */
     app.get('/verify', function(req, res) {
        let rand = req.query.id;
+       // if id exists
        if(rand != null){
+           // if an id was passed to the page then check verification code
             db.checkVerification(rand, res, function(results) {
+                // if correct and verified then send to front end view
                 if(results.changedRows > 0){
-                    res.redirect('http://localhost:8081/login?result=1');
+                    res.redirect('http://localhost:8081/login?result=bfeqwhf8327rtgq3fq8o');
                     //res.status(200).redirect("Your account has been verified.")
                 } else {
                     res.status(500).send("Verification failed, unknown information.")
                 }
             })
        } else {
+           // if not verified then send error message
            res.status(500).send("Verification failed, unknown information.")
        }
     });
 
+    /**
+     * Carries out a paddler search based on a passed term
+     */
 	app.get('/search', function(req, res) {
 		let x = req.query.term;
         db.getSearch(x, res, function(results) {
@@ -251,7 +266,10 @@ module.exports = function(app) {
         })
 	});
 
-    app.post('/insertrace', function(req, res) {
+	/**
+     * Inserts a race by passing details to database
+	 */
+    app.post('/insertrace', check, function(req, res) {
         let race = {
             raceName: req.body.name,
             year : req.body.year,
@@ -264,26 +282,39 @@ module.exports = function(app) {
         })
     });
 
+    /**
+     * Gets all regions in the system
+     */
     app.get('/regions', function(req, res) {
         db.getRegions(res, function(results) {
             res.send(results);
         })
     });
 
+    /**
+     * Checks to see if the user logged in is a race organiser by sending an id to the database
+     */
     app.post('/isorganiser', function(req, res) {
-       db.isOrganiser(req.body.userID, res, function(results) {
+        let id = req.body.userID;
+       db.isOrganiser(id, res, function(results) {
            res.send(results);
        })
     });
 
-    app.get('/getclubraces', function(req, res) {
+    /**
+     * Gets all the races run by a club by passing the clubID
+     */
+    app.get('/getclubraces', check, function(req, res) {
         let x = req.query.id;
         db.getClubRaces(x, res, function(results) {
            res.send(results);
         });
     })
 
-    app.post('/insertpaddlerboat', function(req, res) {
+    /**
+     * Inserts a paddler boat which determines what paddlers a boat contains
+     */
+    app.post('/insertpaddlerboat', check, function(req, res) {
         let boat = req.body.boatid;
         let paddler = req.body.paddlerid;
         db.insertPaddlerBoat(boat, paddler, res, function(results) {
@@ -291,7 +322,10 @@ module.exports = function(app) {
         });
     })
 
-    app.post('/insertboatresult', function(req, res) {
+    /**
+     * Inserts a fairly blank boat result into the database ready to be filled with finish times, etc
+     */
+    app.post('/insertboatresult', check, function(req, res) {
         let entry = {
             raceID : req.body.race,
             raceDivision : req.body.div
@@ -301,14 +335,20 @@ module.exports = function(app) {
         });
     })
 
-    app.post('/deleteentry', function(req, res) {
+    /**
+     * Deletes a race entry in the database by passing a boatID
+     */
+    app.post('/deleteentry', check, function(req, res) {
         let boat = req.body.boatid;
         db.deleteEntry(boat, res, function(results) {
             res.send(results);
         })
     })
 
-    app.get('/clubraceentries', function(req, res) {
+    /**
+     * Gets the entries for a particular club for a particular race
+     */
+    app.get('/clubraceentries', check, function(req, res) {
         let raceID = req.query.raceid;
         let clubID = req.query.clubid;
         db.getClubEntries(raceID, clubID, res, function(results) {
@@ -316,14 +356,20 @@ module.exports = function(app) {
         });
     })
 
-    app.get('/racedivisions', function(req, res) {
+    /**
+     * Gets the race divisions that currently have entries for a particular race
+     */
+    app.get('/racedivisions', check, function(req, res) {
         let race = req.query.id;
         db.getRaceDivisions(race, res, function(results) {
            res.send(results);
         });
     })
 
-    app.post('/updateraceoffset', function(req, res) {
+    /**
+     * Updates the race stopwatch offsets for each divisional race
+     */
+    app.post('/updateraceoffset', check, function(req, res) {
         let data = {
             list : req.body.list,
             raceID : req.body.raceID,
@@ -333,54 +379,79 @@ module.exports = function(app) {
         });
     })
 
-    app.post('/assignboatnumbers', function(req, res) {
+    /**
+     * Runs the assign boat number command which gives each boat a number and saves it to the database
+     * The boat number acts as a unique identifier for the particular race
+     */
+    app.post('/assignboatnumbers', check, function(req, res) {
         let data = req.body.data;
         db.assignNumbers(data, res, function(results) {
            res.send(results);
         });
     })
 
-    app.post('/updateboattime', function(req, res) {
+    /**
+     * Updates a boats time and race outcome for a particular boat number for a particular race
+     */
+    app.post('/updateboattime', check, function(req, res) {
         let data = req.body.data;
         db.updateBoatTime(data, res, function(results){
            res.send(results);
         });
     })
 
-    app.get('/boatnumbers', function(req, res) {
-        let id = req.query.id;
-        db.getDistinctBoatnumbers(id, res, function (results) {
+    /**
+     * Gets a list of boat numbers for a particular race
+     */
+    app.get('/boatnumbers', check, function(req, res) {
+        let raceID = req.query.id;
+        db.getDistinctBoatnumbers(raceID, res, function (results) {
             res.send(results);
         });
     })
 
-    app.post('/insertAccess', function(req, res) {
+    /**
+     * Inserts an access token for somebody who might want to help with result input
+     * and sends an email to them with a link
+     */
+    app.post('/insertAccess', check, function(req, res) {
         let data = req.body.data;
+        // creates a random hash to store in database
         let hash = crypto.randomBytes(50).toString('hex');
         let body = "Hello volunteer  \n\n" +
             "You have been asked to help input boat numbers and their finishing time.\n" +
             "Please follow the link below to access the input page.\n" +
             "http://localhost:8081/phoneresults/" + hash;
+        // sends the email and then saves token to database
         mail.send(data.email, "Race Result Volunteer", body);
         db.insertAccess(data, hash, res, function(results) {
            res.send(results);
         });
     })
 
-    app.get('/distinctdivisions', function(req, res) {
+    /**
+     * Gets the distinct divisions that exist in the whole system
+      */
+    app.get('/distinctdivisions', check, function(req, res) {
         db.distinctDivisions(res, function(results) {
            res.send(results);
         });
     })
 
-    app.post('/addPaddler', function(req, res) {
+    /**
+     * Adds a new paddler to the system
+     */
+    app.post('/addPaddler', check, function(req, res) {
         let data = req.body.data;
         db.addPaddler(data, res, function(results) {
            res.send(results);
         });
     })
 
-    app.post('/updaterace', function(req, res) {
+    /**
+     * Updates a races details based on the raceID
+     */
+    app.post('/updaterace', check, function(req, res) {
         let race = {
             raceName: req.body.name,
             year : req.body.year,
@@ -392,6 +463,10 @@ module.exports = function(app) {
         })
     });
 
+    /**
+     * Updates a boats results including there position, points and promotion/demotion field
+     * for a particular boat for a particular race
+     */
     app.post('/updateboatresult', function(req, res) {
         let data = req.body.data;
         db.updateBoatResult(data, res, function(results){
@@ -399,9 +474,13 @@ module.exports = function(app) {
         });
     })
 
+    /**
+     * This call carries out a mass update of boat results submitted by a regional advisor
+     */
     app.post('/mass_updateboatresult', function(req, res) {
         let data = req.body.data;
         let response = [];
+        // loop over all the data and update each boats results
         for(let i = 0; i < data.length; i++){
             db.updateBoatResult(data[i], res, function(results){
                 response.push(results);
@@ -410,7 +489,11 @@ module.exports = function(app) {
         res.send(response);
     })
 
-    app.post('/updateraceprocess', function(req, res) {
+    /**
+     * Updates the processed column in the race database to determine whether the results are ready for
+     * checking by a regional advisor or if they are ready to go live on the site
+     */
+    app.post('/updateraceprocess', check, function(req, res) {
         let data = req.body.data;
         if(data.region != undefined){
             regionalAdvisorEmail(data.raceID, data.region, res);
@@ -422,6 +505,10 @@ module.exports = function(app) {
 
     })
 
+    /**
+     * Checks to see if a user accessing a page can actually access that page by looking in the temporary
+     * access table for a particular token, returns the type of action this user can carry out
+     */
     app.get('/accesspage', function(req, res) {
         let hash =  req.query.id;
         db.checkAccess(hash, res, function(results) {
@@ -429,65 +516,86 @@ module.exports = function(app) {
         });
     })
 
-    app.get('/getracepaddlers', function(req, res ) {
+    /**
+     * Gets all the paddlers entered into a particular race
+     */
+    app.get('/getracepaddlers', check, function(req, res ) {
         let raceid = req.query.id;
         db.getRacePaddlers(raceid, res, function (results) {
             res.send(results);
         });
     })
 
-    app.get('/clubbycode', function(req, res) {
+    /**
+     * Gets the details for a club based on the club code given
+     */
+    app.get('/clubbycode', check, function(req, res) {
         let code = req.query.code;
         db.getClubByCode(code, res, function(results){
             res.send(results);
         });
     })
 
-    app.post('/insertclubpoints', function(req, res){
-        let data = req.body.data;
-        db.insertClubPoints(data, res, function(results) {
+    app.post('/clubpointsforrace', function(req, res) {
+        let raceID = req.body.raceID;
+        db.getClubPointsForRace(raceID, res, function(results){
             res.send(results);
         })
     })
 
+    /**
+     * The large processing route that goes over results and calculates positions, points, promotions,
+     * demotions and points
+     */
     app.post('/processresults', function(req, res) {
         try {
-
             let data = req.body.data;
+            // gets all boat resulst for a race
             db.getBoatResult(data.raceID, res, function (results) {
+                // save necessary variables for processing
                 results = JSON.parse(results).response;
                 let processType = req.body.data.processType;
                 let raceID = req.body.data.raceID;
                 let race_region;
+                // gets the race region for this race
                 db.getRaceRegion(raceID, res, function (results) {
                     race_region = results[0].regionID;
                 });
 
-
+                // a list to store all clubs in race
                 var clubList = [];
                 // sort into list of races
                 let raceList = [];
+                // for every result into race
                 for (let i = 0; i < results.length; i++) {
+                    // save the division
                     let div = results[i].raceDivision;
+                    // save the club to list
                     clubList.push(results[i].clubID);
+                    // make sure all times are entered
                     if (results[i].time === null) {
                         res.status(428).send("Not all times were filled in.");
                         return;
                     }
+                    // if a k2 result then append 0
                     if (div.includes("_")) {
                         div = div[0] + "0";
                     } else {
-
+                        // if k1 then take division number
                         div = div[0];
                     }
+                    // if a list for that particular division doesn't exist
                     if (raceList[parseInt(div)] == null) {
+                        // add a list to that element and add the result to it
                         raceList[parseInt(div)] = new Array();
                         raceList[parseInt(div)].push(results[i]);
                     } else {
+                        // add the element to the already defined list
                         raceList[parseInt(div)].push(results[i]);
                     }
                 }
 
+                // arrays for division splitting times
                 let div123 = [];
                 let div456 = [];
                 let div78 = [];
@@ -495,15 +603,16 @@ module.exports = function(app) {
                 // loop over each race and order results by time
                 for (let j = 0; j < raceList.length; j++) {
                     if (raceList[j] != null) {
-
+                        // order results by time
                         raceList[j].sort(function (a, b) {
                             return parseInt(hmsToSeconds(a.time)) - parseInt(hmsToSeconds(b.time));
                         })
 
                         let race = raceList[j];
-
+                        // loop over each race
                         for (let y = 0; y < race.length; y++) {
                             let current = race[y];
+                            // add to appropriate list for the three distances
                             if (j == 1 || j == 2 || j == 3) {
                                 div123.push({
                                     boatID: current.boatID,
@@ -527,10 +636,13 @@ module.exports = function(app) {
                     }
                 }
 
+                // define lists for calculations
                 let promotion_div1div2 = [];
                 let promotion_div2div3div4div5 = [];
                 let promotion_div5div6div7div8 = [];
                 let demotion_times = [];
+                // get promotion and demotion times for each division
+                // these are based on handbook factors
                 if (div123.length > 0) {
                     let average = getDiv1Div2Times(div123);
                     promotion_div1div2[1] = average * 1.067;
@@ -558,24 +670,25 @@ module.exports = function(app) {
                     demotion_times[8] = average * 1.583;
                 }
 
+                // loop over each division race
                 for (let x = 0; x < raceList.length; x++) {
                     if (raceList[x] != null) {
                         let resultList = raceList[x];
+                        // define starting points and position
                         let startingPoints = 20;
                         let pos = 1;
                         let hundred_ten_percent = 10000;
                         let promotionCounter = 0;
+                        // for each result
                         for (let z = 0; z < resultList.length; z++) {
                             let current = resultList[z];
                             current.position = pos;
 
                             let paddlerInRegion = true;
                             let changeDiv = 0;
+                            // if normal process continue
                             if (processType == 0) {
 
-                                if (current.regionID == 0) {
-                                    current.regionID = race_region;
-                                }
                                 if (race_region != current.regionID) {
                                     paddlerInRegion = false;
                                 }
@@ -584,6 +697,8 @@ module.exports = function(app) {
                                 let time = hmsToSeconds(current.time);
                                 let promote = false;
                                 let demote = false;
+                                // check paddler time against promotion and demotion times
+                                // and promote or demote where appropriate
                                 if (div == 2 || div == 3) {
                                     if (time < promotion_div1div2[div - 1]) {
                                         //changeDiv = div - 1;
@@ -622,33 +737,41 @@ module.exports = function(app) {
                                     demote = true;
                                 }
 
+                                // calculate hundred ten percent time only if the current paddler hasn't
+                                // been promoted and no one else has been promoted yet
                                 if (changeDiv == 0 && promotionCounter == 0) {
                                     hundred_ten_percent = hmsToSeconds(current.time) * 1.1;
                                 } else {
                                     promotionCounter++;
                                 }
-
+                                // if paddler retired or did not start give zero points
                                 if (current.time.includes("RTD") || current.time.includes("DNS")) {
                                     current.points = "";
+                                // if paddler was slow then hundred ten percent time then give one point
                                 } else if (hmsToSeconds(current.time) > hundred_ten_percent && x != 9 && x != 90) {
                                     current.points = "1";
+                                // if points are currently less that 2 then give 2
                                 } else if (startingPoints < 2) {
                                     current.points = "2";
+                                // apply normal points
                                 } else {
                                     current.points = startingPoints;
                                 }
 
+                                // if in region then remove from point for next paddler
                                 if (paddlerInRegion) {
                                     startingPoints--;
                                 } else {
+                                    // if not in region then set points to none
                                     current.points = "";
                                 }
 
-
+                                // if paddler changed division then send to database
                                 if (changeDiv > 0) {
                                     db.changePaddlerDiv(current.paddlerID, changeDiv, res, function (results) {
 
                                     });
+                                    // add to promotion of demotion field in database
                                     if (promote) {
                                         changeDiv = "P" + changeDiv;
                                     } else if (demote) {
@@ -660,6 +783,8 @@ module.exports = function(app) {
                                 } else {
                                     changeDiv = '';
                                 }
+                            // if different process type then just make sure division doesn't change
+                            // this is for when an advisor submits results
                             } else if (data.processType == 1) {
                                 changeDiv = current.raceDivision;
                             }
@@ -672,7 +797,7 @@ module.exports = function(app) {
                                 pd: changeDiv,
                                 raceID: current.raceID
                             }
-
+                            // submit updated resuts to database and add one to position
                             db.updateBoatResultProcess(data, res, function (results) {
                                 //console.log(results);
                                 pos++;
@@ -681,17 +806,18 @@ module.exports = function(app) {
                     }
 
                 }
-                // calculate club points
+                // makes sure only unique club IDs are in list
                 clubList = [...new Set(clubList.map(x => x))];
-
+                // loop over all clubs
                 for (let i = 0; i < clubList.length; i++) {
+                    // gets a clubs entries and sorts them by points given
                     db.getClubEntries(raceID, clubList[i], res, function (result) {
                         let clubEntries = JSON.parse(result).response;
                         clubEntries.sort(function (a, b) {
                             return parseInt(b.points) - (a.points);
                         })
                         let totalClub = 0;
-
+                        // loops over top 12 paddlers in club to get total points
                         for (let z = 0; z < 12; z++) {
                             if (clubEntries[z] != null) {
                                 totalClub += parseInt(clubEntries[z].points);
@@ -702,8 +828,9 @@ module.exports = function(app) {
                             points: totalClub,
                             raceID: raceID
                         }
+                        // update points table
                         db.updateClubPoints(data, res, function (results) {
-
+                            rese.send()
                         })
                     });
                 }
@@ -714,26 +841,31 @@ module.exports = function(app) {
         }
     })
 
-/*    app.get('/promotiondemotiontimes', function(req, res) {
-        let raceid = req.query.id;
-    }*/
-
+    /**
+     * Sends an email to a regional advisor with a link to edit results
+     * @param raceID The raceID for the race results that are going to be checked
+     * @param region The region of the race so that the right advisor is emailed
+     * @param res Response for front end
+     */
     function regionalAdvisorEmail(raceID, region, res){
-        console.log(region)
+        // get advisor email
         db.getAdvisorEmail(region, res, function(results) {
             results = JSON.parse(results);
             let email = results.response[0].advisorEmail;
+            // create a hash to append to link in email
             let hash = crypto.randomBytes(50).toString('hex');
             let body = "Hello Regional Advisor,  \n\n" +
                 "A set of race results have been submitted.\n" +
                 "Please follow the link below to review the results and make changes.\n" +
                 "http://localhost:8081/adminresult/" + raceID + "?auth=" + hash;
+            // send email
             mail.send(email, "Race Result Submission", body);
             let data = {
                 email : email,
                 accessType : 1,
                 raceid : raceID
             }
+            // insert an access token so that the advisor can access the page
             db.insertAccess(data, hash, res, function(results) {
                 res.send(results);
             });
@@ -742,11 +874,18 @@ module.exports = function(app) {
 
     }
 
+    /**
+     * Gets the promotion average for div 1,2 and 3
+     * @param div123 The list of results for those divisions
+     * @returns {*} The average factor
+     */
     function getDiv1Div2Times(div123){
+        // sort by time
         div123.sort(function(a, b) {
             return parseInt(hmsToSeconds(a.time)) - parseInt(hmsToSeconds(b.time));
         })
 
+        // get middle time for course
         let middle = div123[Math.floor(div123.length / 2)];
         let middle2;
         let midplaceTime = 0;
@@ -756,6 +895,7 @@ module.exports = function(app) {
         } else {
             midplaceTime = middle;
         }
+        // get a factor for each division
         let div1 = secondsToHMS(midplaceTime / 1.033);
         let div2 = secondsToHMS(midplaceTime / 1.117);
         let div3 = secondsToHMS(midplaceTime / 1.2);
@@ -764,6 +904,8 @@ module.exports = function(app) {
         let longCourse = [hmsToSeconds(div1),hmsToSeconds(div2), hmsToSeconds(div3)];
         longCourse.sort();
         let average;
+        // check how close these factors are to each other and remove a factor that is to far away from
+        // the other two factors
         if(longCourse[2] - longCourse[0] > 60){
             // all three within 60
             average = (longCourse[0] + longCourse[1] + longCourse[2]) / 3;
@@ -782,10 +924,15 @@ module.exports = function(app) {
 /*        let promotionTimes = [];
         promotionTimes[1] = average * 1.067;
         promotionTimes[2] = average * 1.15;*/
-
+        // return the average of the factors
         return average;
     }
 
+    /**
+     * Same as above but for Div 4, 5, 6
+     * @param div345 The list of results in those divisions
+     * @returns {*} The average factor
+     */
     function getDiv3Div4Div5Times(div345){
         div345.sort(function(a, b) {
             return parseInt(hmsToSeconds(a.time)) - parseInt(hmsToSeconds(b.time));
@@ -832,6 +979,11 @@ module.exports = function(app) {
         return average;
     }
 
+    /**
+     * Same as above but for Div 6, 7, 8
+     * @param div678 The list of results for those divisions
+     * @returns {number} The average factor
+     */
     function getDiv6Div7Div8Times(div678){
         div678.sort(function(a, b) {
             return parseInt(hmsToSeconds(a.time)) - parseInt(hmsToSeconds(b.time));
