@@ -25,7 +25,7 @@ function connectDatabase() {
  */
 function getRaceResultsOrder(id, res, callback) {
     db.query('SELECT boatresult.boatname, boatresult.raceDivision, boatresult.position, paddler.name, club.clubcode , paddler.class ,paddler.division,'
-        + ' boatresult.time, boatresult.points,boatresult.pd,boatresult.outcome '
+        + ' boatresult.time, boatresult.points ,boatresult.pd,boatresult.outcome '
         + ' FROM '
         + '	boatresult, paddler, club, paddlerboat'
         + ' WHERE '
@@ -45,6 +45,7 @@ function getRaceResultsOrder(id, res, callback) {
 function getRaceResults(id, res, callback) {
     db.query('SELECT\n' +
         '    boatresult.boatname,\n' +
+        '    boatresult.boatID,\n' +
         '    boatresult.raceDivision,\n' +
         '    boatresult.position,\n' +
         '    paddler.name,\n' +
@@ -163,7 +164,7 @@ function getClubs(res, callback) {
         });
 }
 
-function getClubPaddlers(id, res, callback) {
+function getClubPaddlersEntries(id, res, callback) {
     db.query('SELECT *, (SELECT COUNT(*) FROM paddlerboat WHERE paddlerboat.paddlerID = paddler.paddlerID) as numEntries ' +
         'FROM paddler WHERE clubID = ? ORDER BY `numEntries` DESC ', [id] ,
         function(err, rows) {
@@ -271,8 +272,7 @@ function checkVerification(info, res, callback){
 }
 
 function getSearch(term, res, callback) {
-    db.query('SELECT name, class, paddlerID, division, club.clubID, club.clubcode FROM paddler, club WHERE name LIKE "'+term+'%" AND paddler.clubID = club.clubID', function(err, rows) {
-		console.log(rows);
+    db.query('SELECT name, class, paddlerID, division, club.clubID, club.clubcode FROM paddler, club WHERE name LIKE "%'+term+'%" AND paddler.clubID = club.clubID', function(err, rows) {
         if (err) {
             callback(error(err));
         }else {
@@ -282,8 +282,8 @@ function getSearch(term, res, callback) {
 }
 
 function insertRace(race, res, callback) {
-    db.query('INSERT INTO race (raceName, year, date, clubID, seasonID) ' +
-        'VALUES (?, ?, ?, ?, (SELECT MAX(seasonID) FROM season))', [race.raceName, race.year, race.date, race.clubID],
+    db.query('INSERT INTO race (raceName, year, date, clubID, seasonID, regionID) ' +
+        'VALUES (?, ?, ?, ?, (SELECT MAX(seasonID) FROM season), ?)', [race.raceName, race.year, race.date, race.clubID, race.regionID],
         function(err, rows){
             if(err){
                 callback(error(err));
@@ -389,7 +389,9 @@ function getClubEntries(raceID, clubID, res, callback) {
     db.query('SELECT\n' +
         '    paddler.*,\n' +
         '    boatresult.boatID,\n' +
-        '    boatresult.raceDivision\n' +
+        '    boatresult.raceDivision,\n' +
+        '    boatresult.points,\n' +
+        '    boatresult.boatname\n' +
         '    FROM\n' +
         '    paddler,\n' +
         '    boatresult,\n' +
@@ -473,8 +475,9 @@ function assignNumbers(data, res, callback) {
     )
 }
 
-function updateBoatResult(data, res, callback){
-    db.query('UPDATE boatresult SET time = ?, outcome = ? WHERE boatname = ?', [data.racetime, data.outcome, data.boatname],
+function updateBoatTime(data, res, callback){
+    db.query('UPDATE boatresult SET time = ?, outcome = ? WHERE boatname = ? AND raceID = ?',
+        [data.racetime, data.outcome, data.boatname, data.raceID],
         function(err, rows){
             if(err){
                 callback(error(err));
@@ -486,7 +489,7 @@ function updateBoatResult(data, res, callback){
 }
 
 function getDistinctBoatnumbers(id, res, callback){
-    db.query('SELECT DISTINCT boatname FROM boatresult WHERE raceID = ?', [id],
+    db.query('SELECT DISTINCT boatname, time FROM boatresult WHERE raceID = ?', [id],
         function(err, rows){
             if(err){
                 callback(error(err));
@@ -521,6 +524,231 @@ function checkAccess(hash, res, callback) {
     )
 }
 
+function distinctDivisions(res, callback) {
+    db.query('SELECT DISTINCT division FROM paddler',
+        function(err, rows) {
+            if(err){
+                callback(error(err));
+            } else {
+                callback(success(rows));
+            }
+        }
+    )
+}
+
+function addPaddler(data, res, callback) {
+    db.query('INSERT INTO paddler (name, division, class, bcu, clubID) VALUES (?, ?, ?, ?, ?);', [data.name, data.division, data.class, data.bcu, data.club],
+        function(err, rows) {
+            if(err){
+                callback(error(err));
+            } else {
+                callback(success(rows));
+            }
+        }
+    )
+}
+
+function updateRace(race, res, callback) {
+    db.query('UPDATE race SET raceName = ?, year = ?, date = ? WHERE raceID = ?', [race.raceName, race.year, race.date, race.raceID],
+        function(err, rows){
+            if(err){
+                callback(error(err));
+            } else {
+                callback(success(rows));
+            }
+        }
+    )
+}
+
+function updateBoatResult(data, res, callback){
+    db.query('UPDATE boatresult SET position = ?, time = ?, pd = ? WHERE boatname = ? AND raceID = ?',
+        [data.position, data.time, data.pd, data.boatname, data.raceID],
+        function(err, rows){
+            if(err){
+                callback(error(err));
+            } else {
+                callback(success(rows));
+            }
+        }
+    )
+}
+
+function updateBoatResultProcess(data, res, callback){
+    let sql = "UPDATE boatresult SET position = "+ data.position +", points = "+ data.points +", pd = "+ data.pd +" WHERE boatname = "+ data.boatname +" AND raceID = "+ data.raceID;
+
+    db.query('UPDATE boatresult SET position = ?, points = ?, pd = ? WHERE boatname = ? AND raceID = ?',
+        [data.position, data.points, data.pd, data.boatname, data.raceID],
+        function(err, rows){
+            if(err){
+                callback(error(err));
+            } else {
+                callback(success(rows));
+            }
+        }
+    )
+}
+
+function updateProcess(data, res, callback) {
+    db.query('UPDATE race SET processed = ? WHERE raceID = ?', [data.process, data.raceID],
+        function(err, rows){
+            if(err){
+                callback(error(err));
+            } else {
+                callback(success(rows));
+            }
+        }
+    )
+}
+
+function getAdvisorEmail(data, res, callback) {
+    db.query('SELECT advisorEmail FROM region WHERE regionID = ?', [data],
+        function(err, rows){
+            if(err){
+                callback(error(err));
+            } else {
+                callback(success(rows));
+            }
+        }
+    )
+}
+
+function getBoatResult(raceID, res, callback) {
+    db.query('SELECT boatresult.*, club.clubcode, club.clubID, club.regionID, paddlerboat.paddlerID FROM boatresult, club, ' +
+        'paddlerboat, paddler WHERE raceID = ? AND boatresult.boatID = paddlerboat.boatID ' +
+        'AND paddlerboat.paddlerID = paddler.paddlerID AND paddler.clubID = club.clubID', [raceID],
+        function(err, rows){
+            if(err){
+                callback(error(err));
+            } else {
+                callback(success(rows));
+            }
+        }
+    )
+}
+
+function changePaddlerDiv(paddlerID, div, res, callback) {
+    db.query('UPDATE paddler SET division = ? WHERE paddlerID = ?', [div, paddlerID],
+        function(err, rows){
+            if(err){
+                callback(err);
+            } else {
+                callback(rows);
+            }
+        }
+    )
+}
+
+function getRacePaddlers(raceID, res, callback) {
+    db.query("SELECT\n"
+        + "    boatresult.boatname,\n"
+        + "    boatresult.raceDivision,\n"
+        + "    boatresult.boatID,\n"
+        + "    boatresult.position,\n"
+        + "    paddler.name,\n"
+        + "    club.clubcode,\n"
+        + "    club.clubID,\n"
+        + "    paddler.class,\n"
+        + "    paddler.division,\n"
+        + "    paddler.paddlerID\n"
+        + "FROM\n"
+        + "    boatresult,\n"
+        + "    paddler,\n"
+        + "    club,\n"
+        + "    paddlerboat\n"
+        + "WHERE\n"
+        + "    boatresult.boatID = paddlerboat.boatID AND boatresult.raceID = ? AND paddler.paddlerID = paddlerboat.paddlerID AND paddler.clubID = club.clubID", [raceID],
+        function(err, rows){
+            if(err){
+                callback(error(err));
+            } else {
+                callback(success(rows));
+            }
+        }
+    )
+}
+
+function getPaddlerRegion(paddlerID, res, callback) {
+    db.query('SELECT regionID FROM club,paddler WHERE paddler.paddlerID = ? AND paddler.clubID = club.clubID', [paddlerID],
+        function(err, rows) {
+            if (err) {
+                callback(err);
+            } else {
+                callback(rows);
+            }
+        }
+    )
+}
+
+function getPaddlerIDByBoatID(boatID, res, callback) {
+    db.query('SELECT paddlerID FROM paddlerboat WHERE boatID = ?', [boatID],
+        function(err, rows) {
+            if (err) {
+                callback(err);
+            } else {
+                callback(rows);
+            }
+        }
+    )
+}
+
+function getRaceRegion(raceID, res, callback){
+    db.query('SELECT regionID FROM race WHERE raceID = ?', [raceID],
+        function(err, rows) {
+            if (err) {
+                callback(err);
+            } else {
+                callback(rows);
+            }
+        }
+    )
+}
+
+function getClubByCode(code, res, callback){
+    db.query('SELECT * FROM club WHERE clubcode = ?', [code],
+        function(err, rows) {
+            if (err) {
+                callback(err);
+            } else {
+                callback(rows);
+            }
+        }
+    )
+}
+
+function updateClubPoints(data, res, callback){
+    let SQL = "IF EXISTS(SELECT * FROM clubpoints WHERE raceID = ? AND clubID = ?) " +
+        "UPDATE clubpoints SET points = ? WHERE raceID = ? AND clubID = ? " +
+        "ELSE " +
+        "INSEERT INTO clubpoints (clubID, points, raceID) VALUES (?, ?, ?);";
+    db.query(SQL,
+        [data.raceID, data.clubID, data.points, data.raceID, data.clubID, data.clubID, data.points, data.raceID],
+        function(err, rows) {
+            if (err) {
+                callback(err);
+            } else {
+                callback(rows);
+            }
+        }
+    )
+}
+
+function getClubPointsForRace(raceID, res, callback){
+    db.query('SELECT clubpoints.*, club.clubID, club.clubname, club.clubcode, club.regionID FROM clubpoints, club WHERE raceID =? AND clubpoints.clubID = club.clubID', [raceID],
+        function(err, rows) {
+            if (err) {
+                callback(error(err));
+            } else {
+                callback(success(rows));
+            }
+        }
+    )
+}
+
+/*function getRegionResultsForSeason(data, res, callback){
+    db.query('SELECT * FROM clubpoints, club WHERE regionI')
+}*/
+
+
 function success(data){
     return JSON.stringify({"status": 200, "error": null, "response": data});
 }
@@ -538,7 +766,7 @@ module.exports = {
     getRaces: getRaces,
     getPaddlers: getPaddlers,
     getClubs: getClubs,
-    getClubPaddlers: getClubPaddlers,
+    getClubPaddlersEntries: getClubPaddlersEntries,
     getPaddlerStats: getPaddlerStats,
     getPaddlerRaces: getPaddlerRaces,
 	getRace : getRace,
@@ -560,9 +788,24 @@ module.exports = {
     updateRaceOffset : updateRaceOffset,
     assignNumbers : assignNumbers,
     checkVerification : checkVerification,
-    updateBoatResult : updateBoatResult,
+    updateBoatTime : updateBoatTime,
     getDistinctBoatnumbers : getDistinctBoatnumbers,
     insertAccess : insertAccess,
-    checkAccess : checkAccess
-
+    checkAccess : checkAccess,
+    distinctDivisions : distinctDivisions,
+    addPaddler : addPaddler,
+    updateRace : updateRace,
+    updateBoatResult : updateBoatResult,
+    updateProcess : updateProcess,
+    getAdvisorEmail : getAdvisorEmail,
+    getBoatResult : getBoatResult,
+    updateBoatResultProcess : updateBoatResultProcess,
+    changePaddlerDiv : changePaddlerDiv,
+    getRacePaddlers : getRacePaddlers,
+    getPaddlerRegion : getPaddlerRegion,
+    getRaceRegion : getRaceRegion,
+    getClubByCode : getClubByCode,
+    getPaddlerIDByBoatID : getPaddlerIDByBoatID,
+    updateClubPoints : updateClubPoints,
+    getClubPointsForRace : getClubPointsForRace
 };
