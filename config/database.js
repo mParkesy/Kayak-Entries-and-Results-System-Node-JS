@@ -273,7 +273,6 @@ function checkVerification(info, res, callback){
 
 function getSearch(term, res, callback) {
     db.query('SELECT name, class, paddlerID, division, club.clubID, club.clubcode FROM paddler, club WHERE name LIKE "%'+term+'%" AND paddler.clubID = club.clubID', function(err, rows) {
-		console.log(rows);
         if (err) {
             callback(error(err));
         }else {
@@ -734,7 +733,7 @@ function updateClubPoints(data, res, callback){
 }
 
 function getClubPointsForRace(raceID, res, callback){
-    db.query('SELECT * FROM clubpoints, club WHERE raceID =? AND clubpoints.clubID = club.clubID', [raceID],
+    db.query('SELECT clubpoints.*, club.clubID, club.clubname, club.clubcode, club.regionID FROM clubpoints, club WHERE raceID =? AND clubpoints.clubID = club.clubID', [raceID],
         function(err, rows) {
             if (err) {
                 callback(error(err));

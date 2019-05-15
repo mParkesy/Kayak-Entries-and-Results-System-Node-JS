@@ -11,7 +11,7 @@ app.use(bodyParser.urlencoded({
     extended: true
 }));
 app.use(bodyParser.json());
-
+var serveStatic = require('serve-static');
 
 // get database details and connect to database
 const db = require('./config/database');
@@ -20,6 +20,9 @@ db.connectDatabase();
 // cors is needed for chrome
 var cors = require('cors')
 app.use(cors())
+
+app.use(logger('dev'));
+app.use(cookieParser());
 
 // nedeed for use with chrome
 const allowCrossDomain = function(req, res, next) {
@@ -30,10 +33,11 @@ const allowCrossDomain = function(req, res, next) {
 }
 app.use(allowCrossDomain)
 
+app.use(serveStatic(__dirname + "/public"));
+
 // include routes for api
 require('./api/routes')(app);
 
-app.use(logger('dev'));
-app.use(cookieParser());
+
 
 module.exports = app;

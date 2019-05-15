@@ -9,8 +9,6 @@ let token = "";
 module.exports = function(app) {
     'use strict';
 
-
-
        var check = function(req, res, next) {
                 let server_token = req.headers['authorization'];
                 if(server_token === token) {
