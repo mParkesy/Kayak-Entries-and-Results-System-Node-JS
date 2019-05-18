@@ -11,7 +11,6 @@ app.use(bodyParser.urlencoded({
     extended: true
 }));
 app.use(bodyParser.json());
-var serveStatic = require('serve-static');
 
 // get database details and connect to database
 const db = require('./config/database');
@@ -33,7 +32,6 @@ const allowCrossDomain = function(req, res, next) {
 }
 app.use(allowCrossDomain)
 
-app.use(serveStatic(__dirname + "/public"));
 
 // include routes for api
 require('./api/routes')(app);

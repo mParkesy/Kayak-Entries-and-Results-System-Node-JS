@@ -209,8 +209,9 @@ module.exports = function(app) {
                                         let body = "Hello " + name + ", \n\n" +
                                             "You recently registered on the Hasler Race Management Website,\n" +
                                             "Please click the link below to verify your account:\n " +
+                                            //"https://kayakresults.herokuapp.com/verify?id=" + rand;
                                             "http://localhost:3000/verify?id=" + rand;
-                                        // sene email
+                                        // send email
                                         mail.send(email, "Registration Email", body);
                                         // send message to front end
 										return res.status(200).send("An email has been sent to verify the account");
@@ -242,6 +243,7 @@ module.exports = function(app) {
             db.checkVerification(rand, res, function(results) {
                 // if correct and verified then send to front end view
                 if(results.changedRows > 0){
+                    //res.redirect('https://kayakmanagement-65a08.firebaseapp.com/login?result=1');
                     res.redirect('http://localhost:8081/login?result=bfeqwhf8327rtgq3fq8o');
                     //res.status(200).redirect("Your account has been verified.")
                 } else {
@@ -419,6 +421,7 @@ module.exports = function(app) {
         let body = "Hello volunteer  \n\n" +
             "You have been asked to help input boat numbers and their finishing time.\n" +
             "Please follow the link below to access the input page.\n" +
+            //"https://kayakmanagement-65a08.firebaseapp.com/phoneresults/" + hash;
             "http://localhost:8081/phoneresults/" + hash;
         // sends the email and then saves token to database
         mail.send(data.email, "Race Result Volunteer", body);
