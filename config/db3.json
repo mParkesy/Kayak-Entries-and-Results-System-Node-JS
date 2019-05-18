@@ -1,8 +1,0 @@
-{
-  "host": "localhost",
-  "user":"root",
-  "password":"",
-  "database":"kayakmanagement",
-  "port": 3306,
-  "multipleStatements" : true
-}
