@@ -552,290 +552,289 @@ module.exports = function(app) {
         try {
             let data = req.body.data;
             // gets all boat resulst for a race
-            db.getBoatResult(data.raceID, res, function (results) {
+            db.getBoatResult(data.raceID, res, function (boatResults) {
                 // save necessary variables for processing
-                results = JSON.parse(results).response;
+                let results = JSON.parse(boatResults).response;
                 let processType = req.body.data.processType;
                 let raceID = req.body.data.raceID;
                 let race_region;
                 // gets the race region for this race
-                db.getRaceRegion(raceID, res, function (results) {
-                    race_region = results[0].regionID;
-                });
-
-                // a list to store all clubs in race
-                var clubList = [];
-                // sort into list of races
-                let raceList = [];
-                // for every result into race
-                for (let i = 0; i < results.length; i++) {
-                    // save the division
-                    let div = results[i].raceDivision;
-                    // save the club to list
-                    clubList.push(results[i].clubID);
-                    // make sure all times are entered
-                    if (results[i].time === null) {
-                        res.status(428).send("Not all times were filled in.");
-                        return;
+                db.getRaceRegion(raceID, res, function (regionResult) {
+                    race_region = regionResult[0].regionID;
+                    // a list to store all clubs in race
+                    var clubList = [];
+                    // sort into list of races
+                    let raceList = [];
+                    // for every result into race
+                    for (let i = 0; i < results.length; i++) {
+                        // save the division
+                        let div = results[i].raceDivision;
+                        // save the club to list
+                        clubList.push(results[i].clubID);
+                        // make sure all times are entered
+                        if (results[i].time === null) {
+                            res.status(428).send("Not all times were filled in.");
+                            return;
+                        }
+                        // if a k2 result then append 0
+                        if (div.includes("_")) {
+                            div = div[0] + "0";
+                        } else {
+                            // if k1 then take division number
+                            div = div[0];
+                        }
+                        // if a list for that particular division doesn't exist
+                        if (raceList[parseInt(div)] == null) {
+                            // add a list to that element and add the result to it
+                            raceList[parseInt(div)] = new Array();
+                            raceList[parseInt(div)].push(results[i]);
+                        } else {
+                            // add the element to the already defined list
+                            raceList[parseInt(div)].push(results[i]);
+                        }
                     }
-                    // if a k2 result then append 0
-                    if (div.includes("_")) {
-                        div = div[0] + "0";
-                    } else {
-                        // if k1 then take division number
-                        div = div[0];
-                    }
-                    // if a list for that particular division doesn't exist
-                    if (raceList[parseInt(div)] == null) {
-                        // add a list to that element and add the result to it
-                        raceList[parseInt(div)] = new Array();
-                        raceList[parseInt(div)].push(results[i]);
-                    } else {
-                        // add the element to the already defined list
-                        raceList[parseInt(div)].push(results[i]);
-                    }
-                }
 
-                // arrays for division splitting times
-                let div123 = [];
-                let div456 = [];
-                let div78 = [];
+                    // arrays for division splitting times
+                    let div123 = [];
+                    let div456 = [];
+                    let div78 = [];
 
-                // loop over each race and order results by time
-                for (let j = 0; j < raceList.length; j++) {
-                    if (raceList[j] != null) {
-                        // order results by time
-                        raceList[j].sort(function (a, b) {
-                            return parseInt(hmsToSeconds(a.time)) - parseInt(hmsToSeconds(b.time));
-                        })
+                    // loop over each race and order results by time
+                    for (let j = 0; j < raceList.length; j++) {
+                        if (raceList[j] != null) {
+                            // order results by time
+                            raceList[j].sort(function (a, b) {
+                                return parseInt(hmsToSeconds(a.time)) - parseInt(hmsToSeconds(b.time));
+                            })
 
-                        let race = raceList[j];
-                        // loop over each race
-                        for (let y = 0; y < race.length; y++) {
-                            let current = race[y];
-                            // add to appropriate list for the three distances
-                            if (j == 1 || j == 2 || j == 3) {
-                                div123.push({
-                                    boatID: current.boatID,
-                                    time: current.time,
-                                    raceDivision: current.raceDivision
-                                })
-                            } else if (j == 4 || j == 5 || j == 6) {
-                                div456.push({
-                                    boatID: current.boatID,
-                                    time: current.time,
-                                    raceDivision: current.raceDivision
-                                })
-                            } else if (j == 7 || j == 8) {
-                                div78.push({
-                                    boatID: current.boatID,
-                                    time: current.time,
-                                    raceDivision: current.raceDivision
-                                })
+                            let race = raceList[j];
+                            // loop over each race
+                            for (let y = 0; y < race.length; y++) {
+                                let current = race[y];
+                                // add to appropriate list for the three distances
+                                if (j == 1 || j == 2 || j == 3) {
+                                    div123.push({
+                                        boatID: current.boatID,
+                                        time: current.time,
+                                        raceDivision: current.raceDivision
+                                    })
+                                } else if (j == 4 || j == 5 || j == 6) {
+                                    div456.push({
+                                        boatID: current.boatID,
+                                        time: current.time,
+                                        raceDivision: current.raceDivision
+                                    })
+                                } else if (j == 7 || j == 8) {
+                                    div78.push({
+                                        boatID: current.boatID,
+                                        time: current.time,
+                                        raceDivision: current.raceDivision
+                                    })
+                                }
                             }
                         }
                     }
-                }
 
-                // define lists for calculations
-                let promotion_div1div2 = [];
-                let promotion_div2div3div4div5 = [];
-                let promotion_div5div6div7div8 = [];
-                let demotion_times = [];
-                // get promotion and demotion times for each division
-                // these are based on handbook factors
-                if (div123.length > 0) {
-                    let average = getDiv1Div2Times(div123);
-                    promotion_div1div2[1] = average * 1.067;
-                    promotion_div1div2[2] = average * 1.15;
-                    demotion_times[2] = average * 1.083;
-                    demotion_times[3] = average * 1.167;
-                    demotion_times[4] = average * 1.25;
-                }
-                if (div456.length > 0) {
-                    let average = getDiv3Div4Div5Times(div456);
-                    promotion_div2div3div4div5[2] = average * 1.15;
-                    promotion_div2div3div4div5[3] = average * 1.233;
-                    promotion_div2div3div4div5[4] = average * 1.317;
-                    promotion_div2div3div4div5[5] = average * 1.4;
-                    demotion_times[5] = average * 1.333;
-                    demotion_times[6] = average * 1.417;
-                    demotion_times[7] = average * 1.5;
-                }
-                if (div78.length > 0) {
-                    let average = getDiv6Div7Div8Times(div78);
-                    promotion_div5div6div7div8[5] = average * 1.4;
-                    promotion_div5div6div7div8[6] = average * 1.483;
-                    promotion_div5div6div7div8[7] = average * 1.567;
-                    promotion_div5div6div7div8[8] = average * 1.65;
-                    demotion_times[8] = average * 1.583;
-                }
+                    // define lists for calculations
+                    let promotion_div1div2 = [];
+                    let promotion_div2div3div4div5 = [];
+                    let promotion_div5div6div7div8 = [];
+                    let demotion_times = [];
+                    // get promotion and demotion times for each division
+                    // these are based on handbook factors
+                    if (div123.length > 0) {
+                        let average = getDiv1Div2Times(div123);
+                        promotion_div1div2[1] = average * 1.067;
+                        promotion_div1div2[2] = average * 1.15;
+                        demotion_times[2] = average * 1.083;
+                        demotion_times[3] = average * 1.167;
+                        demotion_times[4] = average * 1.25;
+                    }
+                    if (div456.length > 0) {
+                        let average = getDiv3Div4Div5Times(div456);
+                        promotion_div2div3div4div5[2] = average * 1.15;
+                        promotion_div2div3div4div5[3] = average * 1.233;
+                        promotion_div2div3div4div5[4] = average * 1.317;
+                        promotion_div2div3div4div5[5] = average * 1.4;
+                        demotion_times[5] = average * 1.333;
+                        demotion_times[6] = average * 1.417;
+                        demotion_times[7] = average * 1.5;
+                    }
+                    if (div78.length > 0) {
+                        let average = getDiv6Div7Div8Times(div78);
+                        promotion_div5div6div7div8[5] = average * 1.4;
+                        promotion_div5div6div7div8[6] = average * 1.483;
+                        promotion_div5div6div7div8[7] = average * 1.567;
+                        promotion_div5div6div7div8[8] = average * 1.65;
+                        demotion_times[8] = average * 1.583;
+                    }
 
-                // loop over each division race
-                for (let x = 0; x < raceList.length; x++) {
-                    if (raceList[x] != null) {
-                        let resultList = raceList[x];
-                        // define starting points and position
-                        let startingPoints = 20;
-                        let pos = 1;
-                        let hundred_ten_percent = 10000;
-                        let promotionCounter = 0;
-                        // for each result
-                        for (let z = 0; z < resultList.length; z++) {
-                            let current = resultList[z];
-                            current.position = pos;
+                    // loop over each division race
+                    for (let x = 0; x < raceList.length; x++) {
+                        if (raceList[x] != null) {
+                            let resultList = raceList[x];
+                            // define starting points and position
+                            let startingPoints = 20;
+                            let pos = 1;
+                            let hundred_ten_percent = 10000;
+                            let promotionCounter = 0;
+                            // for each result
+                            for (let z = 0; z < resultList.length; z++) {
+                                let current = resultList[z];
+                                current.position = pos;
 
-                            let paddlerInRegion = true;
-                            let changeDiv = 0;
-                            // if normal process continue
-                            if (processType == 0) {
-
-                                if (race_region != current.regionID) {
-                                    paddlerInRegion = false;
-                                }
-
-                                let div = current.raceDivision;
-                                let time = hmsToSeconds(current.time);
-                                let promote = false;
-                                let demote = false;
-                                // check paddler time against promotion and demotion times
-                                // and promote or demote where appropriate
-                                if (div == 2 || div == 3) {
-                                    if (time < promotion_div1div2[div - 1]) {
-                                        //changeDiv = div - 1;
-                                        //promote = true;
-                                    } else if (div == 2 && time > demotion_times[3]) {
-                                        changeDiv = div + 1;
-                                        demote = true;
-                                    } else if (div == 3 && time > demotion_times[4]) {
-                                        changeDiv = div + 1;
-                                        demote = true;
+                                let paddlerInRegion = true;
+                                let changeDiv = 0;
+                                // if normal process continue
+                                if (processType == 0) {
+                                    console.log("region: " + race_region +" and current: " + current.regionID)
+                                    if (race_region != current.regionID) {
+                                        paddlerInRegion = false;
                                     }
-                                } else if (div == 4 || div == 5 || div == 6) {
-                                    if (time < promotion_div2div3div4div5[div - 1]) {
-                                        changeDiv = div - 1;
-                                        promote = true;
-                                    } else if (div == 4 && time > demotion_times[5]) {
-                                        changeDiv = div + 1;
-                                        demote = true;
-                                    } else if (div == 5 && time > demotion_times[6]) {
-                                        changeDiv = div + 1;
-                                        demote = true;
-                                    } else if (div == 6 && time > demotion_times[7]) {
-                                        changeDiv = div + 1;
-                                        demote = true;
+
+                                    let div = current.raceDivision;
+                                    let time = hmsToSeconds(current.time);
+                                    let promote = false;
+                                    let demote = false;
+                                    // check paddler time against promotion and demotion times
+                                    // and promote or demote where appropriate
+                                    if (div == 2 || div == 3) {
+                                        if (time < promotion_div1div2[div - 1]) {
+                                            //changeDiv = div - 1;
+                                            //promote = true;
+                                        } else if (div == 2 && time > demotion_times[3]) {
+                                            //changeDiv = div + 1;
+                                            //demote = true;
+                                        } else if (div == 3 && time > demotion_times[4]) {
+                                            //changeDiv = div + 1;
+                                            //demote = true;
+                                        }
+                                    } else if (div == 4 || div == 5 || div == 6) {
+                                        if (time < promotion_div2div3div4div5[div - 1]) {
+                                            changeDiv = div - 1;
+                                            promote = true;
+                                        } else if (div == 4 && time > demotion_times[5]) {
+                                            //changeDiv = div + 1;
+                                            //demote = true;
+                                        } else if (div == 5 && time > demotion_times[6]) {
+                                            //changeDiv = div + 1;
+                                            //demote = true;
+                                        } else if (div == 6 && time > demotion_times[7]) {
+                                            //changeDiv = div + 1;
+                                            //demote = true;
+                                        }
+                                    } else if (div == 7 || div == 8 || div == 9) {
+                                        if (time < promotion_div5div6div7div8[div - 1]) {
+                                            changeDiv = div - 1;
+                                            promote = true;
+                                        } else if (div == 7 && time > demotion_times[8]) {
+                                            //changeDiv = div + 1;
+                                            //demote = true;
+                                        }
+                                    } else if (div == 1 && time > demotion_times[2]) {
+                                        //changeDiv = div + 1;
+                                        //demote = true;
                                     }
-                                } else if (div == 7 || div == 8 || div == 9) {
-                                    if (time < promotion_div5div6div7div8[div - 1]) {
-                                        changeDiv = div - 1;
-                                        promote = true;
-                                    } else if (div == 7 && time > demotion_times[8]) {
-                                        changeDiv = div + 1;
-                                        demote = true;
+
+                                    // calculate hundred ten percent time only if the current paddler hasn't
+                                    // been promoted and no one else has been promoted yet
+                                    if (changeDiv == 0 && promotionCounter == 0) {
+                                        hundred_ten_percent = hmsToSeconds(current.time) * 1.1;
+                                    } else {
+                                        promotionCounter++;
                                     }
-                                } else if (div == 1 && time > demotion_times[2]) {
-                                    changeDiv = div + 1;
-                                    demote = true;
-                                }
+                                    // if paddler retired or did not start give zero points
+                                    if (current.time.includes("RTD") || current.time.includes("DNS")) {
+                                        current.points = "";
+                                        // if paddler was slow then hundred ten percent time then give one point
+                                    } else if (hmsToSeconds(current.time) > hundred_ten_percent && x != 9 && x != 90) {
+                                        current.points = "1";
+                                        // if points are currently less that 2 then give 2
+                                    } else if (startingPoints < 2) {
+                                        current.points = "2";
+                                        // apply normal points
+                                    } else {
+                                        current.points = startingPoints;
+                                    }
 
-                                // calculate hundred ten percent time only if the current paddler hasn't
-                                // been promoted and no one else has been promoted yet
-                                if (changeDiv == 0 && promotionCounter == 0) {
-                                    hundred_ten_percent = hmsToSeconds(current.time) * 1.1;
-                                } else {
-                                    promotionCounter++;
-                                }
-                                // if paddler retired or did not start give zero points
-                                if (current.time.includes("RTD") || current.time.includes("DNS")) {
-                                    current.points = "";
-                                // if paddler was slow then hundred ten percent time then give one point
-                                } else if (hmsToSeconds(current.time) > hundred_ten_percent && x != 9 && x != 90) {
-                                    current.points = "1";
-                                // if points are currently less that 2 then give 2
-                                } else if (startingPoints < 2) {
-                                    current.points = "2";
-                                // apply normal points
-                                } else {
-                                    current.points = startingPoints;
-                                }
+                                    // if in region then remove from point for next paddler
+                                    if (paddlerInRegion) {
+                                        startingPoints--;
+                                    } else {
+                                        // if not in region then set points to none
+                                        current.points = "";
+                                    }
 
-                                // if in region then remove from point for next paddler
-                                if (paddlerInRegion) {
-                                    startingPoints--;
-                                } else {
-                                    // if not in region then set points to none
-                                    current.points = "";
-                                }
+                                    // if paddler changed division then send to database
+                                    if (changeDiv > 0) {
+                                        db.changePaddlerDiv(current.paddlerID, changeDiv, res, function (results) {
 
-                                // if paddler changed division then send to database
-                                if (changeDiv > 0) {
-                                    db.changePaddlerDiv(current.paddlerID, changeDiv, res, function (results) {
+                                        });
+                                        // add to promotion of demotion field in database
+                                        if (promote) {
+                                            changeDiv = "P" + changeDiv;
+                                        } else if (demote) {
+                                            changeDiv = "D" + changeDiv;
+                                        } else {
+                                            changeDiv = '';
+                                        }
 
-                                    });
-                                    // add to promotion of demotion field in database
-                                    if (promote) {
-                                        changeDiv = "P" + changeDiv;
-                                    } else if (demote) {
-                                        changeDiv = "D" + changeDiv;
                                     } else {
                                         changeDiv = '';
                                     }
-
-                                } else {
-                                    changeDiv = '';
+                                    // if different process type then just make sure division doesn't change
+                                    // this is for when an advisor submits results
+                                } else if (data.processType == 1) {
+                                    changeDiv = current.raceDivision;
                                 }
-                            // if different process type then just make sure division doesn't change
-                            // this is for when an advisor submits results
-                            } else if (data.processType == 1) {
-                                changeDiv = current.raceDivision;
-                            }
 
-
-                            let data = {
-                                position: current.position,
-                                boatname: current.boatname,
-                                points: current.points,
-                                pd: changeDiv,
-                                raceID: current.raceID
+                                console.log(current.points);
+                                let data = {
+                                    position: current.position,
+                                    boatname: current.boatname,
+                                    points: current.points,
+                                    pd: changeDiv,
+                                    raceID: current.raceID
+                                }
+                                // submit updated resuts to database and add one to position
+                                db.updateBoatResultProcess(data, res, function (results) {
+                                    //console.log(results);
+                                    pos++;
+                                });
                             }
-                            // submit updated resuts to database and add one to position
-                            db.updateBoatResultProcess(data, res, function (results) {
-                                //console.log(results);
-                                pos++;
-                            });
                         }
+
                     }
-
-                }
-                // makes sure only unique club IDs are in list
-                clubList = [...new Set(clubList.map(x => x))];
-                // loop over all clubs
-                for (let i = 0; i < clubList.length; i++) {
-                    // gets a clubs entries and sorts them by points given
-                    db.getClubEntries(raceID, clubList[i], res, function (result) {
-                        let clubEntries = JSON.parse(result).response;
-                        clubEntries.sort(function (a, b) {
-                            return parseInt(b.points) - (a.points);
-                        })
-                        let totalClub = 0;
-                        // loops over top 12 paddlers in club to get total points
-                        for (let z = 0; z < 12; z++) {
-                            if (clubEntries[z] != null) {
-                                totalClub += parseInt(clubEntries[z].points);
+                    // makes sure only unique club IDs are in list
+                    clubList = [...new Set(clubList.map(x => x))];
+                    // loop over all clubs
+                    for (let i = 0; i < clubList.length; i++) {
+                        // gets a clubs entries and sorts them by points given
+                        db.getClubEntries(raceID, clubList[i], res, function (result) {
+                            let clubEntries = JSON.parse(result).response;
+                            clubEntries.sort(function (a, b) {
+                                return parseInt(b.points) - (a.points);
+                            })
+                            let totalClub = 0;
+                            // loops over top 12 paddlers in club to get total points
+                            for (let z = 0; z < 12; z++) {
+                                if (clubEntries[z] != null) {
+                                    totalClub += parseInt(clubEntries[z].points);
+                                }
                             }
-                        }
-                        let data = {
-                            clubID: clubList[i],
-                            points: totalClub,
-                            raceID: raceID
-                        }
-                        // update points table
-                        db.updateClubPoints(data, res, function (results) {
-                            rese.send()
-                        })
-                    });
-                }
-                res.status(200).send("complete");
+                            let data = {
+                                clubID: clubList[i],
+                                points: totalClub,
+                                raceID: raceID
+                            }
+                            // update points table
+                            db.updateClubPoints(data, res, function (results) {
+                                res.send()
+                            })
+                        });
+                    }
+                    res.status(200).send("complete");
+                });
             })
         } catch(error){
             res.status(400).send("bad request");
